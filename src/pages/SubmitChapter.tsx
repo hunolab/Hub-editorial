@@ -255,19 +255,20 @@ export default function SubmitChapter() {
         </div>
 
         {/* Form */}
-        <Card className="card-editorial shadow-elegant">
-          <CardHeader>
-            <CardTitle className="heading-sm flex items-center">
-              <steps[currentStep - 1].icon className="h-5 w-5 mr-2 text-primary" />
-              Etapa {currentStep}: {steps[currentStep - 1].title}
-            </CardTitle>
-            <CardDescription>
-              {currentStep === 1 && "Informe seus dados pessoais"}
-              {currentStep === 2 && "Selecione o tipo de submissão"}
-              {currentStep === 3 && "Envie o conteúdo do seu capítulo"}
-              {currentStep === 4 && "Complete com informações adicionais"}
-            </CardDescription>
-          </CardHeader>
+<Card className="card-editorial shadow-elegant">
+  <CardHeader>
+    <CardTitle className="heading-sm flex items-center">
+      {StepIcon && <StepIcon className="h-5 w-5 mr-2 text-primary" />}
+      Etapa {currentStep}: {steps[currentStep - 1].title}
+    </CardTitle>
+    <CardDescription>
+      {currentStep === 1 && "Informe seus dados pessoais"}
+      {currentStep === 2 && "Selecione o tipo de submissão"}
+      {currentStep === 3 && "Envie o conteúdo do seu capítulo"}
+      {currentStep === 4 && "Complete com informações adicionais"}
+    </CardDescription>
+  </CardHeader>
+
 
           <CardContent ref={formRef}>
             {/* Step 1: Author Data */}
@@ -387,13 +388,15 @@ export default function SubmitChapter() {
                     <span>{formData.chapterContent.length} caracteres</span>
                     {formData.submissionType === 'coautoria' && (
                     <span>
-                      {formData.chapterContent.length < 8000 
-                        ? `Mínimo: ${8000 - formData.chapterContent.length} caracteres restantes`
-                        : formData.chapterContent.length > 13000
-                        ? `Excesso: ${formData.chapterContent.length - 13000} caracteres`
-                        : '✓ Dentro do limite'
-                      }
-                    </span>
+                    {typeof formData.chapterContent === 'string' ? (
+                    formData.chapterContent.length < 8000 ? 
+                    `Mínimo: ${8000 - formData.chapterContent.length} caracteres restantes` :
+                    formData.chapterContent.length > 13000 ? 
+                    `Excesso: ${formData.chapterContent.length - 13000} caracteres` :
+                    '✓ Dentro do limite'
+                ) : 'Conteúdo inválido'}
+              </span>
+
                     )}
                   </div>
                   {errors.chapterContent && (

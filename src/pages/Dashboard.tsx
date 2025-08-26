@@ -28,7 +28,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import CalculadoraEditorial from '@/pages/Calculadora';
-import SubmitChapter from "@/pages/SubmitChapter"  // Importe o componente
+import { AnimatedThemeToggler } from "@/components/ui/magicui/animated-theme-toggler";
+
+
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -333,14 +335,20 @@ export default function Dashboard() {
         {activeTab === 'home' && (
           <>
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="heading-lg text-foreground mb-2">
-                Editorial
-              </h1>
+            {/* Header + Theme Switch */}
+          <div className="mb-8 flex items-center justify-between">
+        <div>
+            <h1 className="heading-lg text-foreground mb-2">
+              Editorial
+            </h1>
               <p className="body-md text-muted-foreground">
                 Capítulos enviados
               </p>
-            </div>
+          </div>
+            <AnimatedThemeToggler />
+          </div>
+
+            
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

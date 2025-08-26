@@ -7,6 +7,9 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/ui/magicui/marquee";
+import { TextReveal } from "@/components/ui/magicui/text-reveal";
+
+
 
 // Registrar o plugin ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
@@ -16,20 +19,32 @@ const reviews = [
   {
     name: "Luiza",
     username: "@luizamlucena",
-    body: "A Literare transformou meu sonho em realidade. O suporte editorial é incrível!",
-    img: "https://avatar.vercel.sh/joao",
+    body: "Amo publicar com a Literare",
+    img: "https://i.ibb.co/21RnGpmg/2.png",
   },
   {
-    name: "Dr.Thiago Castro",
-    username: "@mariaautora",
-    body: "Nunca imaginei que publicar seria tão simples e profissional. Recomendo!",
-    img: "https://avatar.vercel.sh/maria",
+    name: "Thiago Castro",
+    username: "@dr.thiagocastro",
+    body: "Maior editora em autismo!",
+    img: "https://i.ibb.co/9kQFrJsv/1.png",
   },
   {
-    name: "Pedro",
-    username: "@pedroescritor",
-    body: "O acompanhamento da Literare é excepcional. Minha obra ganhou vida!",
-    img: "https://avatar.vercel.sh/pedro",
+    name: "Hiram",
+    username: "@Hirambaroli",
+    body: "Revisão de primeira!",
+    img: "https://i.ibb.co/MkZyYCDw/3.png",
+  },
+  {
+    name: "Lucedile",
+    username: "@lucedileantunes",
+    body: "Literare publica livros inspiradores.",
+    img: "https://i.ibb.co/JWxybGm8/4.png",
+  },
+  {
+    name: "Chris Pelajo",
+    username: "@chrispelajooficial",
+    body: "Editora com visão inovadora.",
+    img: "https://i.ibb.co/bVthjK4/Chrispelajo.png",
   },
 ];
 
@@ -52,24 +67,27 @@ const ReviewCard = ({
   body: string;
 }) => {
   return (
-    <figure
-      className={cn(
-        "relative h-full w-fit sm:w-36 cursor-pointer overflow-hidden rounded-xl border p-4",
-        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
-        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
-      )}
-    >
-      <div className="flex flex-row items-center gap-2">
-        <img className="rounded-full" width="32" height="32" alt="" src={img} />
-        <div className="flex flex-col">
-          <figcaption className="text-sm font-medium dark:text-white">
-            {name}
-          </figcaption>
-          <p className="text-xs font-medium dark:text-white/40">{username}</p>
-        </div>
-      </div>
-      <blockquote className="mt-2 text-sm">{body}</blockquote>
-    </figure>
+<figure
+  className={cn(
+    "relative w-fit sm:w-36 cursor-pointer rounded-xl border p-4",
+    "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
+    "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+    "flex flex-col"
+  )}
+>
+  <div className="flex flex-row items-center gap-2 mb-2">
+    <img className="rounded-full" width="32" height="32" alt="" src={img} />
+    <div className="flex flex-col">
+      <figcaption className="text-sm font-medium dark:text-white">
+        {name}
+      </figcaption>
+      <p className="text-xs font-sm dark:text-white/40">{username}</p>
+    </div>
+  </div>
+  <blockquote className="text-sm">
+    {body}
+  </blockquote>
+</figure>
   );
 };
 
@@ -84,22 +102,22 @@ const Marquee3D = () => {
             "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
         }}
       >
-        <Marquee pauseOnHover vertical className="[--duration:20s]">
+        <Marquee pauseOnHover vertical className="[--duration:30s]">
           {firstRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
           ))}
         </Marquee>
-        <Marquee reverse pauseOnHover className="[--duration:20s]" vertical>
+        <Marquee reverse pauseOnHover className="[--duration:30s]" vertical>
           {secondRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
           ))}
         </Marquee>
-        <Marquee reverse pauseOnHover className="[--duration:20s]" vertical>
+        <Marquee reverse pauseOnHover className="[--duration:30s]" vertical>
           {thirdRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
           ))}
         </Marquee>
-        <Marquee pauseOnHover className="[--duration:20s]" vertical>
+        <Marquee pauseOnHover className="[--duration:30s]" vertical>
           {fourthRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
           ))}
@@ -224,9 +242,9 @@ export default function Home() {
                   Editorial Literare
                 </span>
                 <h1 className="heading-hero text-foreground">
-                  Transforme sua 
+                  Editorial
                   <span className="text-primary block">
-                    escrita em arte
+                    Literare Books
                   </span>
                 </h1>
               </div>
@@ -252,7 +270,6 @@ export default function Home() {
 
           <div className="hero-marquee flex justify-center lg:justify-end">
             <div className="relative">
-              <div className="absolute inset-0 bg-none-hero rounded-3xl blur-2xl opacity-20 scale-110"></div>
               <Marquee3D />
             </div>
           </div>
@@ -263,9 +280,9 @@ export default function Home() {
       <section ref={featuresRef} className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="heading-lg text-foreground">
+            <TextReveal className="my-custom-class">
               Por que escolher a Literare Books?
-            </h2>
+            </TextReveal>
             <p className="body-lg text-muted-foreground max-w-2xl mx-auto">
               Oferecemos uma experiência editorial completa, do manuscrito à publicação, 
               com o suporte que todo autor merece.

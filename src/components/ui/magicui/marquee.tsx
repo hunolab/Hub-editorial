@@ -19,7 +19,8 @@ const Marquee: FC<MarqueeProps> = ({ children, pauseOnHover, reverse, vertical, 
     >
       <div className="marquee-content" style={{ minWidth: vertical ? '100%' : '200%', minHeight: vertical ? '200%' : '100%' }}>
         {children}
-        {children} {/* Duplicado para loop infinito */}
+        {children}
+        {children} {/* Adiciona mais uma duplicação para maior fluidez */}
       </div>
     </div>
   );

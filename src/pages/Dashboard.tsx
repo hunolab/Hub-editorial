@@ -27,7 +27,8 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
-import CalculadoraEditorial from '@/pages/Calculadora'; // Importe o componente
+import CalculadoraEditorial from '@/pages/Calculadora';
+import SubmitChapter from "@/pages/SubmitChapter"  // Importe o componente
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -334,10 +335,10 @@ export default function Dashboard() {
             {/* Header */}
             <div className="mb-8">
               <h1 className="heading-lg text-foreground mb-2">
-                Dashboard Editorial
+                Editorial
               </h1>
               <p className="body-md text-muted-foreground">
-                Gerencie todas as submissões de capítulos
+                Capítulos enviados
               </p>
             </div>
 

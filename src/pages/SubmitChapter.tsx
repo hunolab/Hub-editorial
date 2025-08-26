@@ -258,9 +258,13 @@ export default function SubmitChapter() {
 <Card className="card-editorial shadow-elegant">
   <CardHeader>
     <CardTitle className="heading-sm flex items-center">
-      {StepIcon && <StepIcon className="h-5 w-5 mr-2 text-primary" />}
-      Etapa {currentStep}: {steps[currentStep - 1].title}
-    </CardTitle>
+  {(() => {
+    const Icon = steps[currentStep - 1].icon;
+    return <Icon className="h-5 w-5 mr-2 text-primary" />;
+  })()}
+  Etapa {currentStep}: {steps[currentStep - 1].title}
+</CardTitle>
+
     <CardDescription>
       {currentStep === 1 && "Informe seus dados pessoais"}
       {currentStep === 2 && "Selecione o tipo de submissão"}

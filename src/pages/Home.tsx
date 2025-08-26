@@ -5,10 +5,115 @@ import { Card } from '@/components/ui/card';
 import { BookOpen, PenTool, Users, Award, ArrowRight, Sparkles } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import heroImage from '@/assets/hero-editorial.jpg';
+import { cn } from "@/lib/utils";
+import { Marquee } from "@/components/ui/magicui/marquee";
 
+// Registrar o plugin ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
 
+// Dados das avaliações
+const reviews = [
+  {
+    name: "Luiza",
+    username: "@luizamlucena",
+    body: "A Literare transformou meu sonho em realidade. O suporte editorial é incrível!",
+    img: "https://avatar.vercel.sh/joao",
+  },
+  {
+    name: "Dr.Thiago Castro",
+    username: "@mariaautora",
+    body: "Nunca imaginei que publicar seria tão simples e profissional. Recomendo!",
+    img: "https://avatar.vercel.sh/maria",
+  },
+  {
+    name: "Pedro",
+    username: "@pedroescritor",
+    body: "O acompanhamento da Literare é excepcional. Minha obra ganhou vida!",
+    img: "https://avatar.vercel.sh/pedro",
+  },
+];
+
+// Divisão das avaliações para as fileiras do Marquee
+const firstRow = reviews.slice(0, reviews.length / 2);
+const secondRow = reviews.slice(reviews.length / 2);
+const thirdRow = reviews.slice(0, reviews.length / 2);
+const fourthRow = reviews.slice(reviews.length / 2);
+
+// Componente ReviewCard
+const ReviewCard = ({
+  img,
+  name,
+  username,
+  body,
+}: {
+  img: string;
+  name: string;
+  username: string;
+  body: string;
+}) => {
+  return (
+    <figure
+      className={cn(
+        "relative h-full w-fit sm:w-36 cursor-pointer overflow-hidden rounded-xl border p-4",
+        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
+        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+      )}
+    >
+      <div className="flex flex-row items-center gap-2">
+        <img className="rounded-full" width="32" height="32" alt="" src={img} />
+        <div className="flex flex-col">
+          <figcaption className="text-sm font-medium dark:text-white">
+            {name}
+          </figcaption>
+          <p className="text-xs font-medium dark:text-white/40">{username}</p>
+        </div>
+      </div>
+      <blockquote className="mt-2 text-sm">{body}</blockquote>
+    </figure>
+  );
+};
+
+// Componente Marquee3D
+const Marquee3D = () => {
+  return (
+    <div className="relative flex h-96 w-full flex-row items-center justify-center gap-4 overflow-hidden [perspective:300px]">
+      <div
+        className="flex flex-row items-center gap-4 hero-marquee"
+        style={{
+          transform:
+            "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+        }}
+      >
+        <Marquee pauseOnHover vertical className="[--duration:20s]">
+          {firstRow.map((review) => (
+            <ReviewCard key={review.username} {...review} />
+          ))}
+        </Marquee>
+        <Marquee reverse pauseOnHover className="[--duration:20s]" vertical>
+          {secondRow.map((review) => (
+            <ReviewCard key={review.username} {...review} />
+          ))}
+        </Marquee>
+        <Marquee reverse pauseOnHover className="[--duration:20s]" vertical>
+          {thirdRow.map((review) => (
+            <ReviewCard key={review.username} {...review} />
+          ))}
+        </Marquee>
+        <Marquee pauseOnHover className="[--duration:20s]" vertical>
+          {fourthRow.map((review) => (
+            <ReviewCard key={review.username} {...review} />
+          ))}
+        </Marquee>
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-background"></div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background"></div>
+    </div>
+  );
+};
+
+// Componente Home
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -16,7 +121,7 @@ export default function Home() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero animations
+      // Animações do Hero
       gsap.fromTo('.hero-title', 
         { opacity: 0, y: 50 },
         { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }
@@ -32,12 +137,21 @@ export default function Home() {
         { opacity: 1, y: 0, duration: 1, delay: 0.4, ease: 'power3.out' }
       );
 
-      gsap.fromTo('.hero-image', 
+      gsap.fromTo('.hero-marquee', 
         { opacity: 0, scale: 0.8 },
         { opacity: 1, scale: 1, duration: 1.2, delay: 0.6, ease: 'power3.out' }
       );
 
-      // Features animation on scroll
+      // Animação flutuante para o Marquee
+      gsap.to('.hero-marquee', {
+        y: -10,
+        duration: 3,
+        repeat: -1,
+        yoyo: true,
+        ease: 'power2.inOut'
+      });
+
+      // Animações das Features
       gsap.fromTo('.feature-card', 
         { opacity: 0, y: 50 },
         {
@@ -54,7 +168,7 @@ export default function Home() {
         }
       );
 
-      // CTA section animation
+      // Animação da seção CTA
       gsap.fromTo('.cta-content', 
         { opacity: 0, y: 30 },
         {
@@ -69,16 +183,6 @@ export default function Home() {
           }
         }
       );
-
-      // Floating animation for hero image
-      gsap.to('.hero-image', {
-        y: -10,
-        duration: 3,
-        repeat: -1,
-        yoyo: true,
-        ease: 'power2.inOut'
-      });
-
     }, heroRef);
 
     return () => ctx.revert();
@@ -109,7 +213,7 @@ export default function Home() {
 
   return (
     <div ref={heroRef} className="min-h-screen">
-      {/* Hero Section */}
+      {/* Seção Hero */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-soft">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
           <div className="text-center lg:text-left space-y-8">
@@ -117,7 +221,7 @@ export default function Home() {
               <div className="hero-title">
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary-soft text-primary text-sm font-medium mb-4">
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Editorial Literária
+                  Editorial Literare
                 </span>
                 <h1 className="heading-hero text-foreground">
                   Transforme sua 
@@ -146,20 +250,16 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-image flex justify-center lg:justify-end">
+          <div className="hero-marquee flex justify-center lg:justify-end">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-hero rounded-3xl blur-2xl opacity-20 scale-110"></div>
-              <img 
-                src={heroImage} 
-                alt="Editorial Literare Books" 
-                className="relative rounded-3xl shadow-hero max-w-lg w-full h-auto object-cover"
-              />
+              <div className="absolute inset-0 bg-none-hero rounded-3xl blur-2xl opacity-20 scale-110"></div>
+              <Marquee3D />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Seção Features */}
       <section ref={featuresRef} className="py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
@@ -192,7 +292,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Seção CTA */}
       <section ref={ctaRef} className="py-24 bg-gradient-soft">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="cta-content space-y-8">

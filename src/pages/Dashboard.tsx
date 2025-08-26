@@ -27,6 +27,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
+import CalculadoraEditorial from '@/pages/Calculadora'; // Importe o componente
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,7 +73,8 @@ export default function Dashboard() {
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  
+  const [activeTab, setActiveTab] = useState('home'); // Estado para controlar a aba ativa
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
@@ -83,7 +85,6 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    // Animate table rows on load
     if (tableRef.current && submissions.length > 0) {
       gsap.fromTo('.submission-row',
         { opacity: 0, y: 20 },
@@ -102,7 +103,6 @@ export default function Dashboard() {
   }, [submissions]);
 
   useEffect(() => {
-    // Filter submissions
     let filtered = submissions;
 
     if (searchTerm) {
@@ -264,7 +264,7 @@ export default function Dashboard() {
                 }),
               ],
             }),
-            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({ text: "" }),
             new Paragraph({
               children: [
                 new TextRun({
@@ -308,363 +308,372 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-soft-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="heading-lg text-foreground mb-2">
-            Dashboard Editorial
-          </h1>
-          <p className="body-md text-muted-foreground">
-            Gerencie todas as submissões de capítulos
-          </p>
+        {/* Abas */}
+        <div className="mb-6">
+          <nav className="flex space-x-4">
+            <Button
+              variant={activeTab === 'home' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('home')}
+              className={activeTab === 'home' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
+            >
+              Home
+            </Button>
+            <Button
+              variant={activeTab === 'calculadora' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('calculadora')}
+              className={activeTab === 'calculadora' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
+            >
+              Calculadora Editorial
+            </Button>
+          </nav>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="card-editorial">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Submissões
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {submissions.length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-editorial">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Novas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {submissions.filter(s => s.status === 'novo').length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-editorial">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Em Análise
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {submissions.filter(s => s.status === 'em_analise').length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-editorial">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Concluídas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {submissions.filter(s => s.status === 'concluido').length}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="card-editorial mb-8">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome, email, título..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 input-editorial"
-                  />
-                </div>
-              </div>
-              <div className="w-48">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="input-editorial">
-                    <SelectValue placeholder="Filtrar por status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
-                    <SelectItem value="novo">Novo</SelectItem>
-                    <SelectItem value="recebido">Recebido</SelectItem>
-                    <SelectItem value="em_analise">Em Análise</SelectItem>
-                    <SelectItem value="solicitar_ajustes">Solicitar Ajustes</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Conteúdo da Aba */}
+        {activeTab === 'home' && (
+          <>
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="heading-lg text-foreground mb-2">
+                Dashboard Editorial
+              </h1>
+              <p className="body-md text-muted-foreground">
+                Gerencie todas as submissões de capítulos
+              </p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Submissions Table */}
-        <Card className="card-editorial" ref={tableRef}>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      Autor
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      Título
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      Data
-                    </th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-muted-foreground">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredSubmissions.map((submission) => (
-                    <tr key={submission.id} className="submission-row hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {submission.author_name}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {submission.author_email}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant="outline" className="capitalize">
-                          {submission.submission_type}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="max-w-xs">
-                          <div className="font-medium text-foreground truncate">
-                            {submission.chapter_title || 'Sem título'}
-                          </div>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {submission.summary}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Select
-                          value={submission.status}
-                          onValueChange={(value) => updateStatus(submission.id, value)}
-                        >
-                          <SelectTrigger className="w-40">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(statusLabels).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {new Date(submission.created_at).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end space-x-2">
-                          {/* View Details */}
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedSubmission(submission)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle className="flex items-center space-x-2">
-                                  <FileText className="h-5 w-5 text-primary" />
-                                  <span>{submission.chapter_title || 'Capítulo sem título'}</span>
-                                </DialogTitle>
-                                <DialogDescription>
-                                  Detalhes completos da submissão
-                                </DialogDescription>
-                              </DialogHeader>
-                              {selectedSubmission && (
-                                <div className="space-y-6">
-                                  {/* Author Info */}
-                                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">Autor</label>
-                                      <p className="text-foreground">{selectedSubmission.author_name}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">Email</label>
-                                      <p className="text-foreground">{selectedSubmission.author_email}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">Tipo</label>
-                                      <p className="text-foreground capitalize">{selectedSubmission.submission_type}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">Status</label>
-                                      <Badge className={statusColors[selectedSubmission.status]}>
-                                        {statusLabels[selectedSubmission.status]}
-                                      </Badge>
-                                    </div>
-                                  </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card className="card-editorial">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total de Submissões
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground">
+                    {submissions.length}
+                  </div>
+                </CardContent>
+              </Card>
 
-                                  {/* Content */}
-                                  <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Conteúdo do Capítulo</label>
-                                    <div className="mt-2 p-4 bg-card border rounded-lg max-h-60 overflow-y-auto">
-                                      <p className="text-foreground whitespace-pre-wrap text-sm">
-                                        {selectedSubmission.chapter_content}
-                                      </p>
-                                    </div>
-                                  </div>
+              <Card className="card-editorial">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Novas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {submissions.filter(s => s.status === 'novo').length}
+                  </div>
+                </CardContent>
+              </Card>
 
-                                  {/* Summary */}
-                                  <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Resumo</label>
-                                    <p className="mt-2 text-foreground">{selectedSubmission.summary}</p>
-                                  </div>
+              <Card className="card-editorial">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Em Análise
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {submissions.filter(s => s.status === 'em_analise').length}
+                  </div>
+                </CardContent>
+              </Card>
 
-                                  {/* Curriculum */}
-                                  <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Currículo</label>
-                                    <p className="mt-2 text-foreground">{selectedSubmission.curriculum}</p>
-                                  </div>
+              <Card className="card-editorial">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Concluídas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {submissions.filter(s => s.status === 'concluido').length}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                                  {/* Cover Text */}
-                                  {selectedSubmission.cover_text && (
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">Texto da Capa</label>
-                                      <p className="mt-2 text-foreground">{selectedSubmission.cover_text}</p>
-                                    </div>
-                                  )}
+            {/* Filters */}
+            <Card className="card-editorial mb-8">
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por nome, email, título..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 input-editorial"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-48">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="input-editorial">
+                        <SelectValue placeholder="Filtrar por status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        <SelectItem value="novo">Novo</SelectItem>
+                        <SelectItem value="recebido">Recebido</SelectItem>
+                        <SelectItem value="em_analise">Em Análise</SelectItem>
+                        <SelectItem value="solicitar_ajustes">Solicitar Ajustes</SelectItem>
+                        <SelectItem value="concluido">Concluído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                                  {/* Photo */}
-                                  {selectedSubmission.photo_file_url && (
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">Foto</label>
-                                      <img 
-                                        src={selectedSubmission.photo_file_url} 
-                                        alt="Foto do autor" 
-                                        className="mt-2 max-w-xs rounded-lg"
-                                      />
-                                    </div>
-                                  )}
-
-                                  {/* Comments */}
-                                  <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Comentários Internos</label>
-                                    <div className="mt-2 space-y-2">
-                                      {selectedSubmission.comments.map((comment, index) => (
-                                        <div key={index} className="p-3 bg-muted/20 rounded-lg">
-                                          <p className="text-foreground text-sm">{comment}</p>
+            {/* Submissions Table */}
+            <Card className="card-editorial" ref={tableRef}>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                          Autor
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                          Tipo
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                          Título
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                          Data
+                        </th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-muted-foreground">
+                          Ações
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredSubmissions.map((submission) => (
+                        <tr key={submission.id} className="submission-row hover:bg-muted/20 transition-colors">
+                          <td className="px-6 py-4">
+                            <div>
+                              <div className="font-medium text-foreground">
+                                {submission.author_name}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {submission.author_email}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant="outline" className="capitalize">
+                              {submission.submission_type}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="max-w-xs">
+                              <div className="font-medium text-foreground truncate">
+                                {submission.chapter_title || 'Sem título'}
+                              </div>
+                              <div className="text-sm text-muted-foreground truncate">
+                                {submission.summary}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Select
+                              value={submission.status}
+                              onValueChange={(value) => updateStatus(submission.id, value)}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(statusLabels).map(([value, label]) => (
+                                  <SelectItem key={value} value={value}>
+                                    {label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-muted-foreground">
+                            {new Date(submission.created_at).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedSubmission(submission)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle className="flex items-center space-x-2">
+                                      <FileText className="h-5 w-5 text-primary" />
+                                      <span>{submission.chapter_title || 'Capítulo sem título'}</span>
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      Detalhes completos da submissão
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  {selectedSubmission && (
+                                    <div className="space-y-6">
+                                      <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Autor</label>
+                                          <p className="text-foreground">{selectedSubmission.author_name}</p>
                                         </div>
-                                      ))}
-                                      <div className="flex space-x-2">
-                                        <Textarea
-                                          placeholder="Adicionar comentário interno..."
-                                          value={newComment}
-                                          onChange={(e) => setNewComment(e.target.value)}
-                                          className="textarea-editorial"
-                                          rows={2}
-                                        />
-                                        <Button 
-                                          onClick={() => addComment(selectedSubmission.id)}
-                                          disabled={!newComment.trim()}
-                                        >
-                                          <MessageSquare className="h-4 w-4" />
-                                        </Button>
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Email</label>
+                                          <p className="text-foreground">{selectedSubmission.author_email}</p>
+                                        </div>
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Tipo</label>
+                                          <p className="text-foreground capitalize">{selectedSubmission.submission_type}</p>
+                                        </div>
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Status</label>
+                                          <Badge className={statusColors[selectedSubmission.status]}>
+                                            {statusLabels[selectedSubmission.status]}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-muted-foreground">Conteúdo do Capítulo</label>
+                                        <div className="mt-2 p-4 bg-card border rounded-lg max-h-60 overflow-y-auto">
+                                          <p className="text-foreground whitespace-pre-wrap text-sm">
+                                            {selectedSubmission.chapter_content}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-muted-foreground">Resumo</label>
+                                        <p className="mt-2 text-foreground">{selectedSubmission.summary}</p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-muted-foreground">Currículo</label>
+                                        <p className="mt-2 text-foreground">{selectedSubmission.curriculum}</p>
+                                      </div>
+                                      {selectedSubmission.cover_text && (
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Texto da Capa</label>
+                                          <p className="mt-2 text-foreground">{selectedSubmission.cover_text}</p>
+                                        </div>
+                                      )}
+                                      {selectedSubmission.photo_file_url && (
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Foto</label>
+                                          <img 
+                                            src={selectedSubmission.photo_file_url} 
+                                            alt="Foto do autor" 
+                                            className="mt-2 max-w-xs rounded-lg"
+                                          />
+                                        </div>
+                                      )}
+                                      <div>
+                                        <label className="text-sm font-medium text-muted-foreground">Comentários Internos</label>
+                                        <div className="mt-2 space-y-2">
+                                          {selectedSubmission.comments.map((comment, index) => (
+                                            <div key={index} className="p-3 bg-muted/20 rounded-lg">
+                                              <p className="text-foreground text-sm">{comment}</p>
+                                            </div>
+                                          ))}
+                                          <div className="flex space-x-2">
+                                            <Textarea
+                                              placeholder="Adicionar comentário interno..."
+                                              value={newComment}
+                                              onChange={(e) => setNewComment(e.target.value)}
+                                              className="textarea-editorial"
+                                              rows={2}
+                                            />
+                                            <Button 
+                                              onClick={() => addComment(selectedSubmission.id)}
+                                              disabled={!newComment.trim()}
+                                            >
+                                              <MessageSquare className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </div>
-                              )}
-                            </DialogContent>
-                          </Dialog>
-
-                          {/* Download DOCX */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => downloadDocx(submission)}
-                            title="Baixar DOCX"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-
-                          {/* Delete */}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-destructive hover:text-destructive"
+                                onClick={() => downloadDocx(submission)}
+                                title="Baixar DOCX"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Download className="h-4 w-4" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação não pode ser desfeita. A submissão será permanentemente removida.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteSubmission(submission.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. A submissão será permanentemente removida.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteSubmission(submission.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
 
-              {filteredSubmissions.length === 0 && (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-medium text-foreground mb-2">
-                    Nenhuma submissão encontrada
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {searchTerm || statusFilter !== 'all' 
-                      ? 'Tente ajustar os filtros de busca.'
-                      : 'Aguardando novas submissões de capítulos.'
-                    }
-                  </p>
+                  {filteredSubmissions.length === 0 && (
+                    <div className="text-center py-12">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-medium text-foreground mb-2">
+                        Nenhuma submissão encontrada
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {searchTerm || statusFilter !== 'all' 
+                          ? 'Tente ajustar os filtros de busca.'
+                          : 'Aguardando novas submissões de capítulos.'
+                        }
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {activeTab === 'calculadora' && <CalculadoraEditorial />}
       </div>
     </div>
   );

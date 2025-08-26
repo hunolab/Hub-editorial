@@ -30,16 +30,17 @@ export const Navigation = () => {
     navigate('/');
   };
 
-  return (
-    <nav className="bg-card/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-2 group">
-            <BookOpen className="h-8 w-8 text-primary group-hover:scale-110 transition-transform duration-200" />
-            <span className="font-display font-bold text-xl text-foreground">
-              Literare Books
-            </span>
-          </Link>
+  return ( 
+  <nav className="bg-card/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-between items-center h-16">
+        <Link to="/" className="flex items-center group">
+          <img 
+            src="../logo.png" 
+            alt="Logo Literare Books" 
+            className="h-16 w-16 object-contain group-hover:scale-110 transition-transform duration-200" 
+          />
+        </Link>
 
           <div className="flex items-center space-x-4">
             {user ? (

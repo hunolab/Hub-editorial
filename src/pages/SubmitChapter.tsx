@@ -69,8 +69,8 @@ export default function SubmitChapter() {
     }
   }, [currentStep]);
 
-  const getWordCount = (text: string): number => {
-    return text.trim() ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+  const getCharacterCount = (text: string): number => {
+    return text.length; // Counts all characters, including spaces
   };
 
   const validateStep = (step: number): boolean => {
@@ -100,24 +100,31 @@ export default function SubmitChapter() {
         if (!formData.chapterContent.trim()) {
           newErrors.chapterContent = 'Conteúdo do capítulo é obrigatório';
         } else {
-          const wordCount = getWordCount(formData.chapterContent);
-          if (formData.submissionType === 'coautoria' && (wordCount < 8000 || wordCount > 13000)) {
-            newErrors.chapterContent = 'Para coautoria, o capítulo deve ter entre 8.000 e 13.000 palavras';
+          const charCount = getCharacterCount(formData.chapterContent);
+          if (formData.submissionType === 'coautoria' && (charCount < 8000 || charCount > 13000)) {
+            newErrors.chapterContent = 'Para coautoria, o capítulo deve ter entre 8.000 e 13.000 caracteres';
           }
         }
         break;
 
       case 4:
+        const curriculumContentLength = formData.curriculum.startsWith('**CURRÍCULO**\n') 
+          ? formData.curriculum.length - '**CURRÍCULO**\n'.length 
+          : formData.curriculum.length;
+        const summaryContentLength = formData.summary.startsWith('**RESUMO**\n') 
+          ? formData.summary.length - '**RESUMO**\n'.length 
+          : formData.summary.length;
+
         if (!formData.curriculum.trim()) {
           newErrors.curriculum = 'Currículo é obrigatório';
-        } else if (formData.curriculum.length < 300 || formData.curriculum.length > 1000) {
-          newErrors.curriculum = 'Currículo deve ter entre 300 e 1000 caracteres';
+        } else if (curriculumContentLength < 300 || curriculumContentLength > 1000) {
+          newErrors.curriculum = 'Currículo deve ter entre 300 e 1000 caracteres (excluindo o título)';
         }
         
         if (!formData.summary.trim()) {
           newErrors.summary = 'Resumo é obrigatório';
-        } else if (formData.summary.length < 100 || formData.summary.length > 400) {
-          newErrors.summary = 'Resumo deve ter entre 100 e 400 caracteres';
+        } else if (summaryContentLength < 100 || summaryContentLength > 400) {
+          newErrors.summary = 'Resumo deve ter entre 100 e 400 caracteres (excluindo o título)';
         }
         break;
     }
@@ -219,7 +226,6 @@ export default function SubmitChapter() {
         description: "Obrigado pela submissão. Entraremos em contato em breve.",
       });
 
-      // Reset form after success
       setFormData({
         authorName: '',
         authorEmail: '',
@@ -384,7 +390,7 @@ export default function SubmitChapter() {
                       <div>
                         <div className="font-medium">Coautoria</div>
                         <div className="text-sm text-muted-foreground">
-                          Colaboração editorial, entre 8.000 e 13.000 palavras
+                          Colaboração editorial, entre 8.000 e 13.000 caracteres
                         </div>
                       </div>
                     </Label>
@@ -453,13 +459,13 @@ export default function SubmitChapter() {
                     aria-describedby={errors.chapterContent ? 'chapterContent-error' : undefined}
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{getWordCount(formData.chapterContent)} palavras</span>
+                    <span>{getCharacterCount(formData.chapterContent)} caracteres</span>
                     {formData.submissionType === 'coautoria' && (
                       <span>
-                        {getWordCount(formData.chapterContent) < 8000 
-                          ? `Mínimo: ${8000 - getWordCount(formData.chapterContent)} palavras restantes` 
-                          : getWordCount(formData.chapterContent) > 13000 
-                          ? `Excesso: ${getWordCount(formData.chapterContent) - 13000} palavras` 
+                        {getCharacterCount(formData.chapterContent) < 8000 
+                          ? `Mínimo: ${8000 - getCharacterCount(formData.chapterContent)} caracteres restantes` 
+                          : getCharacterCount(formData.chapterContent) > 13000 
+                          ? `Excesso: ${getCharacterCount(formData.chapterContent) - 13000} caracteres` 
                           : '✓ Dentro do limite'}
                       </span>
                     )}
@@ -497,7 +503,9 @@ export default function SubmitChapter() {
                     aria-describedby={errors.curriculum ? 'curriculum-error' : undefined}
                   />
                   <div className="text-sm text-muted-foreground">
-                    {formData.curriculum.length - 12}/1000 caracteres (mínimo 300, excluindo o título)
+                    {(formData.curriculum.startsWith('**CURRÍCULO**\n') 
+                      ? formData.curriculum.length - '**CURRÍCULO**\n'.length 
+                      : formData.curriculum.length)}/1000 caracteres (mínimo 300, excluindo o título)
                   </div>
                   {errors.curriculum && (
                     <Alert variant="destructive" id="curriculum-error">
@@ -528,7 +536,9 @@ export default function SubmitChapter() {
                     aria-describedby={errors.summary ? 'summary-error' : undefined}
                   />
                   <div className="text-sm text-muted-foreground">
-                    {formData.summary.length - 10}/400 caracteres (mínimo 100, excluindo o título)
+                    {(formData.summary.startsWith('**RESUMO**\n') 
+                      ? formData.summary.length - '**RESUMO**\n'.length 
+                      : formData.summary.length)}/400 caracteres (mínimo 100, excluindo o título)
                   </div>
                   {errors.summary && (
                     <Alert variant="destructive" id="summary-error">
@@ -585,7 +595,7 @@ export default function SubmitChapter() {
                         className="btn-outline-editorial"
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Remover
+                        Cemover
                       </Button>
                     </div>
                   )}

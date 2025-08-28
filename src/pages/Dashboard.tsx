@@ -30,8 +30,6 @@ import { saveAs } from 'file-saver';
 import CalculadoraEditorial from '@/pages/Calculadora';
 import { AnimatedThemeToggler } from "@/components/ui/magicui/animated-theme-toggler";
 
-
-
 gsap.registerPlugin(ScrollTrigger);
 
 interface Submission {
@@ -45,6 +43,7 @@ interface Submission {
   summary: string;
   cover_text: string | null;
   photo_file_url: string | null;
+  book_coordinator: string | null;
   status: 'novo' | 'recebido' | 'em_analise' | 'solicitar_ajustes' | 'concluido';
   comments: string[];
   created_at: string;
@@ -76,7 +75,7 @@ export default function Dashboard() {
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('home'); // Estado para controlar a aba ativa
+  const [activeTab, setActiveTab] = useState('home');
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -112,8 +111,9 @@ export default function Dashboard() {
       filtered = filtered.filter(sub => 
         sub.author_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sub.author_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sub.chapter_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sub.summary.toLowerCase().includes(searchTerm.toLowerCase())
+        (sub.chapter_title?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        sub.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (sub.book_coordinator?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
       );
     }
 
@@ -139,7 +139,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('chapter_submissions')
-        .select('*')
+        .select('id, author_name, author_email, submission_type, chapter_title, chapter_content, curriculum, summary, cover_text, photo_file_url, book_coordinator, status, comments, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -334,21 +334,17 @@ export default function Dashboard() {
         {/* Conteúdo da Aba */}
         {activeTab === 'home' && (
           <>
-            {/* Header */}
-            {/* Header + Theme Switch */}
-          <div className="mb-8 flex items-center justify-between">
-        <div>
-            <h1 className="heading-lg text-foreground mb-2">
-              Editorial
-            </h1>
-              <p className="body-md text-muted-foreground">
-                Capítulos enviados
-              </p>
-          </div>
-            <AnimatedThemeToggler />
-          </div>
-
-            
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="heading-lg text-foreground mb-2">
+                  Editorial
+                </h1>
+                <p className="body-md text-muted-foreground">
+                  Capítulos enviados
+                </p>
+              </div>
+              <AnimatedThemeToggler />
+            </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -413,7 +409,7 @@ export default function Dashboard() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Buscar por nome, email, título..."
+                        placeholder="Buscar por nome, email, título, livro/coordenador..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-9 input-editorial"
@@ -456,6 +452,9 @@ export default function Dashboard() {
                           Título
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                          Livro/Coordenação
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
                           Status
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
@@ -492,6 +491,11 @@ export default function Dashboard() {
                               <div className="text-sm text-muted-foreground truncate">
                                 {submission.summary}
                               </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-foreground">
+                              {submission.book_coordinator || 'Não informado'}
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -550,6 +554,10 @@ export default function Dashboard() {
                                         <div>
                                           <label className="text-sm font-medium text-muted-foreground">Tipo</label>
                                           <p className="text-foreground capitalize">{selectedSubmission.submission_type}</p>
+                                        </div>
+                                        <div>
+                                          <label className="text-sm font-medium text-muted-foreground">Livro/Coordenação</label>
+                                          <p className="text-foreground">{selectedSubmission.book_coordinator || 'Não informado'}</p>
                                         </div>
                                         <div>
                                           <label className="text-sm font-medium text-muted-foreground">Status</label>
@@ -641,7 +649,7 @@ export default function Dashboard() {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Esta ação não pode ser desfeita. A submissão será permanentemente removida.
+                                      Esta ação não pode be desfeita. A submissão será permanentemente removida.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>

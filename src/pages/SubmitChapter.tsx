@@ -17,7 +17,8 @@ import {
   BookOpen, 
   Info,
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ interface FormData {
   summary: string;
   coverText: string;
   photoFile: File | null;
+  bookCoordinator?: string;
 }
 
 export default function SubmitChapter() {
@@ -55,17 +57,21 @@ export default function SubmitChapter() {
     summary: '',
     coverText: '',
     photoFile: null,
+    bookCoordinator: '',
   });
 
   useEffect(() => {
-    // Animate step transition
     if (formRef.current) {
-      gsap.fromTo(formRef.current.children, 
+      gsap.fromTo(formRef.current.querySelectorAll('.form-field'), 
         { opacity: 0, x: 20 },
         { opacity: 1, x: 0, duration: 0.5, stagger: 0.1 }
       );
     }
   }, [currentStep]);
+
+  const getWordCount = (text: string): number => {
+    return text.trim() ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+  };
 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
@@ -85,16 +91,18 @@ export default function SubmitChapter() {
       case 2:
         if (!formData.submissionType) {
           newErrors.submissionType = 'Tipo de envio é obrigatório';
+        } else if (formData.submissionType === 'coautoria' && !formData.bookCoordinator?.trim()) {
+          newErrors.bookCoordinator = 'Título do livro, Coordenador é obrigatório para coautoria';
         }
         break;
 
       case 3:
         if (!formData.chapterContent.trim()) {
           newErrors.chapterContent = 'Conteúdo do capítulo é obrigatório';
-        } else if (formData.submissionType === 'coautoria') {
-          const wordCount = formData.chapterContent.length;
-          if (wordCount < 8000 || wordCount > 13000) {
-            newErrors.chapterContent = 'Para coautoria, o capítulo deve ter entre 8.000 e 13.000 caracteres';
+        } else {
+          const wordCount = getWordCount(formData.chapterContent);
+          if (formData.submissionType === 'coautoria' && (wordCount < 8000 || wordCount > 13000)) {
+            newErrors.chapterContent = 'Para coautoria, o capítulo deve ter entre 8.000 e 13.000 palavras';
           }
         }
         break;
@@ -132,16 +140,23 @@ export default function SubmitChapter() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== 'image/png') {
-        setErrors({ photoFile: 'Apenas arquivos PNG são aceitos' });
+        setErrors(prev => ({ ...prev, photoFile: 'Apenas arquivos PNG são aceitos' }));
+        setFormData(prev => ({ ...prev, photoFile: null }));
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
-        setErrors({ photoFile: 'Arquivo deve ter no máximo 10MB' });
+        setErrors(prev => ({ ...prev, photoFile: 'Arquivo deve ter no máximo 10MB' }));
+        setFormData(prev => ({ ...prev, photoFile: null }));
         return;
       }
       setFormData(prev => ({ ...prev, photoFile: file }));
       setErrors(prev => ({ ...prev, photoFile: '' }));
     }
+  };
+
+  const removePhotoFile = () => {
+    setFormData(prev => ({ ...prev, photoFile: null }));
+    setErrors(prev => ({ ...prev, photoFile: '' }));
   };
 
   const handleSubmit = async () => {
@@ -152,7 +167,6 @@ export default function SubmitChapter() {
     try {
       let photoUrl = '';
       
-      // Upload photo if provided
       if (formData.photoFile) {
         const fileExt = 'png';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -162,17 +176,20 @@ export default function SubmitChapter() {
           .upload(fileName, formData.photoFile);
 
         if (uploadError) {
-          throw new Error('Erro ao fazer upload da foto');
+          throw new Error(`Erro ao fazer upload da foto: ${uploadError.message}`);
         }
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data } = supabase.storage
           .from('chapter-photos')
           .getPublicUrl(fileName);
         
-        photoUrl = publicUrl;
+        if (!data?.publicUrl) {
+          throw new Error('Não foi possível obter a URL pública da foto. Verifique as permissões do bucket.');
+        }
+        
+        photoUrl = data.publicUrl;
       }
-
-      // Insert submission data
+      
       const { error } = await supabase
         .from('chapter_submissions')
         .insert({
@@ -185,10 +202,16 @@ export default function SubmitChapter() {
           summary: formData.summary,
           cover_text: formData.coverText || null,
           photo_file_url: photoUrl || null,
+          book_coordinator: formData.bookCoordinator || null,
+          status: 'novo',
+          comments: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
 
       if (error) {
-        throw new Error('Erro ao enviar submissão');
+        console.error('Supabase insert error:', error);
+        throw new Error(`Erro ao enviar submissão: ${error.message}`);
       }
 
       toast({
@@ -196,11 +219,26 @@ export default function SubmitChapter() {
         description: "Obrigado pela submissão. Entraremos em contato em breve.",
       });
 
+      // Reset form after success
+      setFormData({
+        authorName: '',
+        authorEmail: '',
+        submissionType: '',
+        chapterTitle: '',
+        chapterContent: '',
+        curriculum: '',
+        summary: '',
+        coverText: '',
+        photoFile: null,
+        bookCoordinator: '',
+      });
+      setCurrentStep(1);
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Submission error:', error);
       toast({
         title: "Erro ao enviar capítulo",
-        description: "Tente novamente mais tarde.",
+        description: error.message || "Tente novamente mais tarde.",
         variant: "destructive"
       });
     } finally {
@@ -220,7 +258,6 @@ export default function SubmitChapter() {
   return (
     <div className="min-h-screen bg-gradient-soft py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="heading-lg text-foreground mb-2">
             Envio de Capítulo
@@ -230,7 +267,6 @@ export default function SubmitChapter() {
           </p>
         </div>
 
-        {/* Progress */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             {steps.map((step) => (
@@ -239,6 +275,10 @@ export default function SubmitChapter() {
                 className={`flex items-center space-x-2 ${
                   step.number <= currentStep ? 'text-primary' : 'text-muted-foreground'
                 }`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setCurrentStep(step.number)}
+                onKeyDown={(e) => e.key === 'Enter' && setCurrentStep(step.number)}
               >
                 <div className={`p-2 rounded-full ${
                   step.number <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted'
@@ -254,31 +294,27 @@ export default function SubmitChapter() {
           <Progress value={progress} className="h-2" />
         </div>
 
-        {/* Form */}
-<Card className="card-editorial shadow-elegant">
-  <CardHeader>
-    <CardTitle className="heading-sm flex items-center">
-  {(() => {
-    const Icon = steps[currentStep - 1].icon;
-    return <Icon className="h-5 w-5 mr-2 text-primary" />;
-  })()}
-  Etapa {currentStep}: {steps[currentStep - 1].title}
-</CardTitle>
-
-    <CardDescription>
-      {currentStep === 1 && "Informe seus dados pessoais"}
-      {currentStep === 2 && "Selecione o tipo de submissão"}
-      {currentStep === 3 && "Envie o conteúdo do seu capítulo"}
-      {currentStep === 4 && "Complete com informações adicionais"}
-    </CardDescription>
-  </CardHeader>
-
+        <Card className="card-editorial shadow-elegant">
+          <CardHeader>
+            <CardTitle className="heading-sm flex items-center">
+              {(() => {
+                const Icon = steps[currentStep - 1].icon;
+                return <Icon className="h-5 w-5 mr-2 text-primary" />;
+              })()}
+              Etapa {currentStep}: {steps[currentStep - 1].title}
+            </CardTitle>
+            <CardDescription>
+              {currentStep === 1 && "Informe seus dados pessoais"}
+              {currentStep === 2 && "Selecione o tipo de submissão"}
+              {currentStep === 3 && "Envie o conteúdo do seu capítulo"}
+              {currentStep === 4 && "Complete com informações adicionais"}
+            </CardDescription>
+          </CardHeader>
 
           <CardContent ref={formRef}>
-            {/* Step 1: Author Data */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="authorName" className="font-medium">
                     Nome do Autor *
                   </Label>
@@ -288,16 +324,18 @@ export default function SubmitChapter() {
                     onChange={(e) => setFormData(prev => ({ ...prev, authorName: e.target.value }))}
                     className="input-editorial"
                     placeholder="Seu nome completo"
+                    aria-label="Nome completo do autor"
+                    aria-describedby={errors.authorName ? 'authorName-error' : undefined}
                   />
                   {errors.authorName && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" id="authorName-error">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{errors.authorName}</AlertDescription>
                     </Alert>
                   )}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="authorEmail" className="font-medium">
                     Email *
                   </Label>
@@ -308,9 +346,11 @@ export default function SubmitChapter() {
                     onChange={(e) => setFormData(prev => ({ ...prev, authorEmail: e.target.value }))}
                     className="input-editorial"
                     placeholder="seu@email.com"
+                    aria-label="Email do autor"
+                    aria-describedby={errors.authorEmail ? 'authorEmail-error' : undefined}
                   />
                   {errors.authorEmail && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" id="authorEmail-error">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{errors.authorEmail}</AlertDescription>
                     </Alert>
@@ -319,12 +359,11 @@ export default function SubmitChapter() {
               </div>
             )}
 
-            {/* Step 2: Submission Type */}
             {currentStep === 2 && (
-              <div className="space-y-6">
+              <div className="space-y-6 form-field">
                 <RadioGroup
                   value={formData.submissionType}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, submissionType: value as SubmissionType }))}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, submissionType: value as SubmissionType, bookCoordinator: value === 'coautoria' ? prev.bookCoordinator : '' }))}
                   className="grid grid-cols-1 gap-4"
                 >
                   <div className="flex items-center space-x-2 p-4 border-2 border-border rounded-xl hover:border-primary transition-colors">
@@ -345,12 +384,35 @@ export default function SubmitChapter() {
                       <div>
                         <div className="font-medium">Coautoria</div>
                         <div className="text-sm text-muted-foreground">
-                          Colaboração editorial, entre 8.000 e 13.000 caracteres
+                          Colaboração editorial, entre 8.000 e 13.000 palavras
                         </div>
                       </div>
                     </Label>
                   </div>
                 </RadioGroup>
+
+                {formData.submissionType === 'coautoria' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bookCoordinator" className="font-medium">
+                      Título do livro, Coordenador *
+                    </Label>
+                    <Input
+                      id="bookCoordinator"
+                      value={formData.bookCoordinator || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bookCoordinator: e.target.value }))}
+                      className="input-editorial"
+                      placeholder="Título do livro e nome do coordenador"
+                      aria-label="Título do livro e coordenador"
+                      aria-describedby={errors.bookCoordinator ? 'bookCoordinator-error' : undefined}
+                    />
+                    {errors.bookCoordinator && (
+                      <Alert variant="destructive" id="bookCoordinator-error">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{errors.bookCoordinator}</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
 
                 {errors.submissionType && (
                   <Alert variant="destructive">
@@ -361,10 +423,9 @@ export default function SubmitChapter() {
               </div>
             )}
 
-            {/* Step 3: Chapter */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="chapterTitle" className="font-medium">
                     Título do Capítulo (opcional)
                   </Label>
@@ -374,10 +435,11 @@ export default function SubmitChapter() {
                     onChange={(e) => setFormData(prev => ({ ...prev, chapterTitle: e.target.value }))}
                     className="input-editorial"
                     placeholder="Título do seu capítulo"
+                    aria-label="Título do capítulo"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="chapterContent" className="font-medium">
                     Conteúdo do Capítulo *
                   </Label>
@@ -387,24 +449,23 @@ export default function SubmitChapter() {
                     onChange={(e) => setFormData(prev => ({ ...prev, chapterContent: e.target.value }))}
                     className="textarea-editorial min-h-[300px]"
                     placeholder="Cole aqui o texto do seu capítulo..."
+                    aria-label="Conteúdo do capítulo"
+                    aria-describedby={errors.chapterContent ? 'chapterContent-error' : undefined}
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{formData.chapterContent.length} caracteres</span>
+                    <span>{getWordCount(formData.chapterContent)} palavras</span>
                     {formData.submissionType === 'coautoria' && (
-                    <span>
-                    {typeof formData.chapterContent === 'string' ? (
-                    formData.chapterContent.length < 8000 ? 
-                    `Mínimo: ${8000 - formData.chapterContent.length} caracteres restantes` :
-                    formData.chapterContent.length > 13000 ? 
-                    `Excesso: ${formData.chapterContent.length - 13000} caracteres` :
-                    '✓ Dentro do limite'
-                ) : 'Conteúdo inválido'}
-              </span>
-
+                      <span>
+                        {getWordCount(formData.chapterContent) < 8000 
+                          ? `Mínimo: ${8000 - getWordCount(formData.chapterContent)} palavras restantes` 
+                          : getWordCount(formData.chapterContent) > 13000 
+                          ? `Excesso: ${getWordCount(formData.chapterContent) - 13000} palavras` 
+                          : '✓ Dentro do limite'}
+                      </span>
                     )}
                   </div>
                   {errors.chapterContent && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" id="chapterContent-error">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{errors.chapterContent}</AlertDescription>
                     </Alert>
@@ -413,47 +474,64 @@ export default function SubmitChapter() {
               </div>
             )}
 
-            {/* Step 4: Extra Information */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="curriculum" className="font-medium">
                     Currículo *
                   </Label>
                   <Textarea
                     id="curriculum"
-                    value={formData.curriculum}
-                    onChange={(e) => setFormData(prev => ({ ...prev, curriculum: e.target.value }))}
+                    value={formData.curriculum.startsWith('**CURRÍCULO**') ? formData.curriculum : `**CURRÍCULO**\n${formData.curriculum}`}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value.startsWith('**CURRÍCULO**\n')) {
+                        setFormData(prev => ({ ...prev, curriculum: `**CURRÍCULO**\n${value}` }));
+                      } else {
+                        setFormData(prev => ({ ...prev, curriculum: value }));
+                      }
+                    }}
                     className="textarea-editorial"
                     placeholder="Conte um pouco sobre sua experiência e formação..."
+                    aria-label="Currículo do autor"
+                    aria-describedby={errors.curriculum ? 'curriculum-error' : undefined}
                   />
                   <div className="text-sm text-muted-foreground">
-                    {formData.curriculum.length}/1000 caracteres (mínimo 300)
+                    {formData.curriculum.length - 12}/1000 caracteres (mínimo 300, excluindo o título)
                   </div>
                   {errors.curriculum && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" id="curriculum-error">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{errors.curriculum}</AlertDescription>
                     </Alert>
                   )}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="summary" className="font-medium">
                     Resumo da Obra *
                   </Label>
                   <Textarea
                     id="summary"
-                    value={formData.summary}
-                    onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))}
+                    value={formData.summary.startsWith('**RESUMO**') ? formData.summary : `**RESUMO**\n${formData.summary}`}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value.startsWith('**RESUMO**\n')) {
+                        setFormData(prev => ({ ...prev, summary: `**RESUMO**\n${value}` }));
+                      } else {
+                        setFormData(prev => ({ ...prev, summary: value }));
+                      }
+                    }}
                     className="textarea-editorial"
                     placeholder="Faça um resumo conciso da sua obra..."
+                    aria-label="Resumo da obra"
+                    aria-describedby={errors.summary ? 'summary-error' : undefined}
                   />
                   <div className="text-sm text-muted-foreground">
-                    {formData.summary.length}/400 caracteres (mínimo 100)
+                    {formData.summary.length - 10}/400 caracteres (mínimo 100, excluindo o título)
                   </div>
                   {errors.summary && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" id="summary-error">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{errors.summary}</AlertDescription>
                     </Alert>
@@ -461,7 +539,7 @@ export default function SubmitChapter() {
                 </div>
 
                 {formData.submissionType === 'solo' && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 form-field">
                     <Label htmlFor="coverText" className="font-medium">
                       Texto da Capa (opcional)
                     </Label>
@@ -471,11 +549,12 @@ export default function SubmitChapter() {
                       onChange={(e) => setFormData(prev => ({ ...prev, coverText: e.target.value }))}
                       className="textarea-editorial"
                       placeholder="Texto que gostaria de ver na capa..."
+                      aria-label="Texto da capa"
                     />
                   </div>
                 )}
 
-                <div className="space-y-2">
+                <div className="space-y-2 form-field">
                   <Label htmlFor="photoFile" className="font-medium">
                     Foto (opcional)
                   </Label>
@@ -486,6 +565,7 @@ export default function SubmitChapter() {
                       accept=".png"
                       onChange={handleFileUpload}
                       className="input-editorial"
+                      aria-label="Upload de foto em PNG"
                     />
                     <Upload className="h-5 w-5 text-muted-foreground" />
                   </div>
@@ -493,9 +573,20 @@ export default function SubmitChapter() {
                     Apenas PNG, máximo 10MB
                   </p>
                   {formData.photoFile && (
-                    <div className="flex items-center space-x-2 text-sm text-primary">
-                      <CheckCircle className="h-4 w-4" />
-                      <span>{formData.photoFile.name}</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 text-sm text-primary">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>{formData.photoFile.name}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={removePhotoFile}
+                        className="btn-outline-editorial"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Remover
+                      </Button>
                     </div>
                   )}
                   {errors.photoFile && (
@@ -509,13 +600,12 @@ export default function SubmitChapter() {
             )}
           </CardContent>
 
-          {/* Navigation */}
           <div className="px-6 pb-6">
             <div className="flex justify-between">
               <Button
                 onClick={prevStep}
                 variant="outline"
-                disabled={currentStep === 1}
+                disabled={currentStep === 1 || isLoading}
                 className="btn-outline-editorial"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
@@ -523,7 +613,7 @@ export default function SubmitChapter() {
               </Button>
 
               {currentStep < 4 ? (
-                <Button onClick={nextStep} className="btn-editorial">
+                <Button onClick={nextStep} className="btn-editorial" disabled={isLoading}>
                   Próximo
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>

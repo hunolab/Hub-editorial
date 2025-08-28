@@ -556,7 +556,7 @@ export default function SubmitChapter() {
 
                 <div className="space-y-2 form-field">
                   <Label htmlFor="photoFile" className="font-medium">
-                    Foto (opcional)
+                    Foto
                   </Label>
                   <div className="flex items-center space-x-4">
                     <Input

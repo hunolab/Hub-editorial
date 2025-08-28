@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -68,6 +68,11 @@ export default function SubmitChapter() {
       );
     }
   }, [currentStep]);
+
+  // Clear chapterContent error when submission type changes
+  useEffect(() => {
+    setErrors(prev => ({ ...prev, chapterContent: '' }));
+  }, [formData.submissionType]);
 
   const getCharacterCount = (text: string): number => {
     return text.length; // Counts all characters, including spaces
@@ -454,12 +459,14 @@ export default function SubmitChapter() {
                     value={formData.chapterContent}
                     onChange={(e) => setFormData(prev => ({ ...prev, chapterContent: e.target.value }))}
                     className="textarea-editorial min-h-[300px]"
-                    placeholder="Cole aqui o texto do seu capítulo..."
+                    placeholder={formData.submissionType === 'coautoria' 
+                      ? 'Cole aqui o texto do seu capítulo (8.000 a 13.000 caracteres, incluindo espaços)...' 
+                      : 'Cole aqui o texto do seu capítulo...'}
                     aria-label="Conteúdo do capítulo"
                     aria-describedby={errors.chapterContent ? 'chapterContent-error' : undefined}
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{getCharacterCount(formData.chapterContent)} caracteres</span>
+                    <span>{getCharacterCount(formData.chapterContent)} caracteres (incluindo espaços)</span>
                     {formData.submissionType === 'coautoria' && (
                       <span>
                         {getCharacterCount(formData.chapterContent) < 8000 
@@ -595,7 +602,7 @@ export default function SubmitChapter() {
                         className="btn-outline-editorial"
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Cemover
+                        Remover
                       </Button>
                     </div>
                   )}

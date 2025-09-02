@@ -29,6 +29,7 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import CalculadoraEditorial from '@/pages/Calculadora';
 import { AnimatedThemeToggler } from "@/components/ui/magicui/animated-theme-toggler";
+import LogKanban from '@/components/LogKanban';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -75,7 +76,7 @@ export default function Dashboard() {
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('home'); // Estado para controlar a aba ativa
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -320,6 +321,13 @@ export default function Dashboard() {
               className={activeTab === 'home' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
             >
               Home
+            </Button>
+            <Button
+              variant={activeTab === 'kanban' ? 'default' : 'outline'} // Nova aba para o Kanban
+              onClick={() => setActiveTab('kanban')}
+              className={activeTab === 'kanban' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
+            >
+              Logistica
             </Button>
             <Button
               variant={activeTab === 'calculadora' ? 'default' : 'outline'}
@@ -689,6 +697,9 @@ export default function Dashboard() {
             </Card>
           </>
         )}
+
+        {/* Renderiza o LogKanban quando a aba 'kanban' estiver ativa */}
+        {activeTab === 'kanban' && <LogKanban />}
 
         {activeTab === 'calculadora' && <CalculadoraEditorial />}
       </div>

@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chapter_submissions: {
+        Row: {
+          author_email: string
+          author_name: string
+          book_coordinator: string | null
+          chapter_content: string
+          chapter_title: string | null
+          comments: string[] | null
+          cover_text: string | null
+          created_at: string
+          curriculum: string
+          id: string
+          photo_file_url: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submission_type: Database["public"]["Enums"]["submission_type"]
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          author_email: string
+          author_name: string
+          book_coordinator?: string | null
+          chapter_content: string
+          chapter_title?: string | null
+          comments?: string[] | null
+          cover_text?: string | null
+          created_at?: string
+          curriculum: string
+          id?: string
+          photo_file_url?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          submission_type: Database["public"]["Enums"]["submission_type"]
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          author_email?: string
+          author_name?: string
+          book_coordinator?: string | null
+          chapter_content?: string
+          chapter_title?: string | null
+          comments?: string[] | null
+          cover_text?: string | null
+          created_at?: string
+          curriculum?: string
+          id?: string
+          photo_file_url?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          submission_type?: Database["public"]["Enums"]["submission_type"]
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      logistica: {
+        Row: {
+          created_at: string | null
+          data_na_editora: string | null
+          data_na_grafica: string | null
+          id: string
+          isbn: string
+          nome_do_livro: string
+          nota_fiscal: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_na_editora?: string | null
+          data_na_grafica?: string | null
+          id?: string
+          isbn: string
+          nome_do_livro: string
+          nota_fiscal?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          data_na_editora?: string | null
+          data_na_grafica?: string | null
+          id?: string
+          isbn?: string
+          nome_do_livro?: string
+          nota_fiscal?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -26,7 +142,14 @@ export type Database = {
       }
     }
     Enums: {
-      user_type: "admin" | "editor" | "comercial" | "logistica" | "user"
+      submission_status:
+        | "novo"
+        | "recebido"
+        | "em_analise"
+        | "solicitar_ajustes"
+        | "concluido"
+      submission_type: "solo" | "coautoria"
+      user_type: "admin" | "editor" | "logistica" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -154,7 +277,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_type: ["admin", "editor", "comercial", "logistica", "user"],
+      submission_status: [
+        "novo",
+        "recebido",
+        "em_analise",
+        "solicitar_ajustes",
+        "concluido",
+      ],
+      submission_type: ["solo", "coautoria"],
+      user_type: ["admin", "editor", "logistica", "member"],
     },
   },
 } as const

@@ -524,7 +524,7 @@ export default function SubmitChapter() {
 
                 <div className="space-y-2 form-field">
                   <Label htmlFor="summary" className="font-medium">
-                    Resumo da Obra *
+                    Resumo do Capítulo *
                   </Label>
                   <Textarea
                     id="summary"

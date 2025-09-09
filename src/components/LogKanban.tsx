@@ -182,7 +182,7 @@ const LogKanban: React.FC = () => {
     'concluido': [],
   });
   const [editingCard, setEditingCard] = useState<BookCard | null>(null);
-  const [newCard, setNewCard] = useState<Partial<BookCard>>({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined });
+  const [newCard, setNewCard] = useState<Partial<BookCard>>({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined, dataNaGrafica: undefined, dataNaEditora: undefined });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(() => {
@@ -341,15 +341,7 @@ const LogKanban: React.FC = () => {
       const destColumn = Array.from(boardData[destination.droppableId]);
       const [movedCard] = sourceColumn.splice(source.index, 1);
 
-      let updatedCard = { ...movedCard };
-
-      if (destination.droppableId === 'na-grafica' && !updatedCard.dataNaGrafica) {
-        updatedCard.dataNaGrafica = new Date();
-      } else if (destination.droppableId === 'chegou-na-editora' && !updatedCard.dataNaEditora) {
-        updatedCard.dataNaEditora = new Date();
-      }
-
-      updatedCard = { ...updatedCard };
+      const updatedCard = { ...movedCard };
 
       destColumn.splice(destination.index, 0, updatedCard);
 
@@ -472,6 +464,8 @@ const LogKanban: React.FC = () => {
             isbn: newCard.isbn,
             nota_fiscal: newCard.notaFiscal || null,
             quantidade_esperada: newCard.expectedQuantity || null,
+            data_na_grafica: newCard.dataNaGrafica ? newCard.dataNaGrafica.toISOString() : null,
+            data_na_editora: newCard.dataNaEditora ? newCard.dataNaEditora.toISOString() : null,
             status: 'devem-ser-enviados',
           },
         ])
@@ -511,7 +505,7 @@ const LogKanban: React.FC = () => {
       });
 
       setIsCreateModalOpen(false);
-      setNewCard({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined });
+      setNewCard({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined, dataNaGrafica: undefined, dataNaEditora: undefined });
     }
     isProcessingRef.current = false;
   };
@@ -622,6 +616,26 @@ const LogKanban: React.FC = () => {
                 InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
                 InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
               />
+              <TextField
+                label="Data na Gráfica (opcional)"
+                type="date"
+                value={editingCard.dataNaGrafica ? editingCard.dataNaGrafica.toISOString().split('T')[0] : ''}
+                onChange={(e) => setEditingCard({ ...editingCard, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined })}
+                fullWidth
+                margin="normal"
+                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+              />
+              <TextField
+                label="Data na Editora (opcional)"
+                type="date"
+                value={editingCard.dataNaEditora ? editingCard.dataNaEditora.toISOString().split('T')[0] : ''}
+                onChange={(e) => setEditingCard({ ...editingCard, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined })}
+                fullWidth
+                margin="normal"
+                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+              />
               <Box sx={{ marginTop: 2, display: 'flex', gap: 1 }}>
                 <Button
                   variant="contained"
@@ -690,6 +704,26 @@ const LogKanban: React.FC = () => {
                 type="number"
                 value={newCard.expectedQuantity ?? ''}
                 onChange={(e) => setNewCard({ ...newCard, expectedQuantity: parseInt(e.target.value) || undefined })}
+                fullWidth
+                margin="normal"
+                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+              />
+              <TextField
+                label="Data na Gráfica (opcional)"
+                type="date"
+                value={newCard.dataNaGrafica ? newCard.dataNaGrafica.toISOString().split('T')[0] : ''}
+                onChange={(e) => setNewCard({ ...newCard, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined })}
+                fullWidth
+                margin="normal"
+                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
+              />
+              <TextField
+                label="Data na Editora (opcional)"
+                type="date"
+                value={newCard.dataNaEditora ? newCard.dataNaEditora.toISOString().split('T')[0] : ''}
+                onChange={(e) => setNewCard({ ...newCard, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined })}
                 fullWidth
                 margin="normal"
                 InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}

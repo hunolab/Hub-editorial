@@ -42,7 +42,7 @@ const Container = styled(Box)({
   padding: '24px',
   backgroundColor: 'hsla(210, 20%, 98%, 0.00)',
   minHeight: '100vh',
-  fontFamily: "'Inter', sans-serif",
+  fontFamily: "'Poppins', sans-serif",
 });
 
 const HeaderContainer = styled(Box)({
@@ -50,8 +50,8 @@ const HeaderContainer = styled(Box)({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '12px 24px',
-  backgroundColor: '#ffb319',
-  color: '#fff',
+  backgroundColor: 'rgba(255, 178, 25, 0)',
+  color: '#28282a',
   borderRadius: '8px 8px 0 0',
   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   marginBottom: '16px',
@@ -74,10 +74,10 @@ const ColumnContainer = styled(Box)<{ $backgroundColor: string }>(({ $background
 }));
 
 const ColumnTitle = styled(Typography)({
-  fontFamily: "'Inter', sans-serif",
+  fontFamily: "'Poppins', sans-serif",
   fontWeight: 600,
   fontSize: '16px',
-  color: '#000000ff',
+  color: '#28282a',
   padding: '8px',
   marginBottom: '8px',
 });
@@ -92,7 +92,7 @@ const ModalContent = styled(Box)({
   borderRadius: '8px',
   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
   width: '400px',
-  fontFamily: "'Inter', sans-serif",
+  fontFamily: "'Poppins', sans-serif",
 });
 
 const StyledCard = styled('div')({
@@ -139,7 +139,7 @@ const Clock: React.FC = () => {
   return (
     <Typography
       variant="h6"
-      sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, color: '#fff' }}
+      sx={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500, color: '#28282a' }}
     >
       {ctime}
     </Typography>
@@ -168,39 +168,39 @@ const CustomCard: React.FC<{
           {...provided.dragHandleProps}
         >
           <div className="card__content">
-            <Typography variant="subtitle1" sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
+            <Typography variant="subtitle1" sx={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, color: '#28282a' }}>
               {card.nomeDoLivro}
             </Typography>
             {card.previsaoChegada && (
-              <Typography variant="subtitle2" sx={{ color: '#f44336', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>
+              <Typography variant="subtitle2" sx={{ color: '#f44336', fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>
                 <strong>Previsão de Chegada:</strong> {card.previsaoChegada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
               </Typography>
             )}
-            <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
+            <Typography variant="body2" sx={{ color: '#717178', fontFamily: "'Poppins', sans-serif" }}>
               <strong>ISBN:</strong> {card.isbn}
             </Typography>
             {card.notaFiscal && (
-              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
+              <Typography variant="body2" sx={{ color: '#717178', fontFamily: "'Poppins', sans-serif" }}>
                 <strong>NF:</strong> {card.notaFiscal}
               </Typography>
             )}
             {card.expectedQuantity !== undefined && (
-              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
+              <Typography variant="body2" sx={{ color: '#717178', fontFamily: "'Poppins', sans-serif" }}>
                 <strong>Solicitado:</strong> {card.expectedQuantity}
               </Typography>
             )}
             {card.arrivedQuantity !== undefined && (
-              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
+              <Typography variant="body2" sx={{ color: '#717178', fontFamily: "'Poppins', sans-serif" }}>
                 <strong>Entregue:</strong> {card.arrivedQuantity}
               </Typography>
             )}
             {card.dataNaGrafica && (
-              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
+              <Typography variant="body2" sx={{ color: '#717178', fontFamily: "'Poppins', sans-serif" }}>
                 <strong>Na Gráfica:</strong> {card.dataNaGrafica.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
               </Typography>
             )}
             {card.dataNaEditora && (
-              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
+              <Typography variant="body2" sx={{ color: '#717178', fontFamily: "'Poppins', sans-serif" }}>
                 <strong>Na Editora:</strong> {card.dataNaEditora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
               </Typography>
             )}
@@ -211,7 +211,7 @@ const CustomCard: React.FC<{
             )}
             <Button
               onClick={() => onEdit(card)}
-              sx={{ color: '#b87a00ff', fontFamily: "'Inter', sans-serif", textTransform: 'none', fontWeight: 500 }}
+              sx={{ color: '#b87a00ff', fontFamily: "'Poppins', sans-serif", textTransform: 'none', fontWeight: 500 }}
             >
               Editar
             </Button>
@@ -558,21 +558,21 @@ const LogKanban: React.FC = () => {
 
   return (
     <div>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
       <DragDropContext onDragEnd={onDragEnd}>
         <HeaderContainer>
-          <Typography variant="h5" sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>
-            Log Literare
+          <Typography variant="h5" sx={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>
+            Logística
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <Button
               variant="contained"
               onClick={() => setIsCreateModalOpen(true)}
               sx={{
-                fontFamily: "'Inter', sans-serif",
-                backgroundColor: '#000000ff',
-                '&:hover': { backgroundColor: '#000000ff' },
+                fontFamily: "'Poppins', sans-serif",
+                backgroundColor: '#272729',
+                '&:hover': { backgroundColor: '#272729' },
                 borderRadius: '6px',
                 textTransform: 'none',
                 padding: '6px 16px',
@@ -585,7 +585,7 @@ const LogKanban: React.FC = () => {
                 variant="contained"
                 onClick={enableAudio}
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "'Poppins', sans-serif",
                   backgroundColor: '#008a73ff',
                   '&:hover': { backgroundColor: '#008a73ff' },
                   borderRadius: '6px',
@@ -633,7 +633,7 @@ const LogKanban: React.FC = () => {
           TransitionComponent={Grow}
         >
           <ModalContent>
-            <Typography variant="h6" gutterBottom sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
+            <Typography variant="h6" gutterBottom sx={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, color: '#172b4d' }}>
               Editar entrega
             </Typography>
             <TextField
@@ -642,8 +642,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, nomeDoLivro: e.target.value } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -652,8 +652,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, isbn: e.target.value } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -662,8 +662,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, notaFiscal: e.target.value } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -673,8 +673,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, expectedQuantity: parseInt(e.target.value) || undefined } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -684,8 +684,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, arrivedQuantity: parseInt(e.target.value) || undefined } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -695,8 +695,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -706,8 +706,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -717,8 +717,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, previsaoChegada: e.target.value ? new Date(e.target.value) : undefined } : null)}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <Box sx={{ marginTop: 3, display: 'flex', gap: 2 }}>
@@ -727,9 +727,9 @@ const LogKanban: React.FC = () => {
                 color="primary"
                 onClick={() => editingCard && handleSaveCard(editingCard)}
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
-                  backgroundColor: '#000000ff',
-                  '&:hover': { backgroundColor: '#000000ff' },
+                  fontFamily: "'Poppins', sans-serif",
+                  backgroundColor: '#272729',
+                  '&:hover': { backgroundColor: '#272729' },
                   borderRadius: '6px',
                   textTransform: 'none',
                   padding: '6px 16px',
@@ -742,9 +742,9 @@ const LogKanban: React.FC = () => {
                 color="error"
                 onClick={() => editingCard && handleDeleteCard(editingCard.id)}
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
-                  backgroundColor: '#eb5a46',
-                  '&:hover': { backgroundColor: '#d94430' },
+                  fontFamily: "'Poppins', sans-serif",
+                  backgroundColor: '#ffb319',
+                  '&:hover': { backgroundColor: '#ffb319' },
                   borderRadius: '6px',
                   textTransform: 'none',
                   padding: '6px 16px',
@@ -757,9 +757,9 @@ const LogKanban: React.FC = () => {
                 color="secondary"
                 onClick={() => setIsModalOpen(false)}
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "'Poppins', sans-serif",
                   borderColor: '#091e4221',
-                  color: '#030303ff',
+                  color: '#272729',
                   borderRadius: '6px',
                   textTransform: 'none',
                   padding: '6px 16px',
@@ -777,7 +777,7 @@ const LogKanban: React.FC = () => {
           TransitionComponent={Grow}
         >
           <ModalContent>
-            <Typography variant="h6" gutterBottom sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
+            <Typography variant="h6" gutterBottom sx={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, color: '#172b4d' }}>
               Criar entrega
             </Typography>
             <TextField
@@ -786,8 +786,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, nomeDoLivro: e.target.value })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -796,8 +796,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, isbn: e.target.value })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -806,8 +806,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, notaFiscal: e.target.value })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -817,8 +817,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, expectedQuantity: parseInt(e.target.value) || undefined })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -828,8 +828,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -839,8 +839,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -850,8 +850,8 @@ const LogKanban: React.FC = () => {
               onChange={(e) => setNewCard({ ...newCard, previsaoChegada: e.target.value ? new Date(e.target.value) : undefined })}
               fullWidth
               margin="normal"
-              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              InputProps={{ style: { fontFamily: "'Poppins', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Poppins', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <Box sx={{ marginTop: 3, display: 'flex', gap: 2 }}>
@@ -860,9 +860,9 @@ const LogKanban: React.FC = () => {
                 color="primary"
                 onClick={handleCreateCard}
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
-                  backgroundColor: '#000000ff',
-                  '&:hover': { backgroundColor: '#000000ff' },
+                  fontFamily: "'Poppins', sans-serif",
+                  backgroundColor: '#272729',
+                  '&:hover': { backgroundColor: '#272729' },
                   borderRadius: '6px',
                   textTransform: 'none',
                   padding: '6px 16px',
@@ -875,7 +875,7 @@ const LogKanban: React.FC = () => {
                 color="secondary"
                 onClick={() => setIsCreateModalOpen(false)}
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "'Poppins', sans-serif",
                   borderColor: '#091e4221',
                   color: '#172b4d',
                   borderRadius: '6px',

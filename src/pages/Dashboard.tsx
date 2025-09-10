@@ -323,7 +323,7 @@ export default function Dashboard() {
               Home
             </Button>
             <Button
-              variant={activeTab === 'kanban' ? 'default' : 'outline'} // Nova aba para o Kanban
+              variant={activeTab === 'kanban' ? 'default' : 'outline'}
               onClick={() => setActiveTab('kanban')}
               className={activeTab === 'kanban' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
             >
@@ -446,29 +446,29 @@ export default function Dashboard() {
             {/* Submissions Table */}
             <Card className="card-editorial" ref={tableRef}>
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="w-full">
+                  <table className="w-full table-auto">
                     <thead className="bg-muted/50">
                       <tr>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[150px] max-w-[200px]">
                           Autor
                         </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[100px] max-w-[120px]">
                           Tipo
                         </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[200px] max-w-[250px]">
                           Título
                         </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[150px] max-w-[200px]">
                           Livro/Coordenação
                         </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[120px] max-w-[160px]">
                           Status
                         </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[100px] max-w-[120px]">
                           Data
                         </th>
-                        <th className="px-6 py-4 text-right text-sm font-medium text-muted-foreground">
+                        <th className="px-4 py-4 text-right text-sm font-medium text-muted-foreground min-w-[120px] max-w-[140px]">
                           Ações
                         </th>
                       </tr>
@@ -476,23 +476,23 @@ export default function Dashboard() {
                     <tbody className="divide-y divide-border">
                       {filteredSubmissions.map((submission) => (
                         <tr key={submission.id} className="submission-row hover:bg-muted/20 transition-colors">
-                          <td className="px-6 py-4">
-                            <div>
-                              <div className="font-medium text-foreground">
+                          <td className="px-4 py-4">
+                            <div className="overflow-hidden">
+                              <div className="font-medium text-foreground truncate">
                                 {submission.author_name}
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-sm text-muted-foreground truncate">
                                 {submission.author_email}
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4">
                             <Badge variant="outline" className="capitalize">
                               {submission.submission_type}
                             </Badge>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="max-w-xs">
+                          <td className="px-4 py-4">
+                            <div className="max-w-[250px]">
                               <div className="font-medium text-foreground truncate">
                                 {submission.chapter_title || 'Sem título'}
                               </div>
@@ -501,17 +501,17 @@ export default function Dashboard() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-foreground">
+                          <td className="px-4 py-4">
+                            <div className="text-sm text-foreground truncate">
                               {submission.book_coordinator || 'Não informado'}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4">
                             <Select
                               value={submission.status}
                               onValueChange={(value) => updateStatus(submission.id, value)}
                             >
-                              <SelectTrigger className="w-40">
+                              <SelectTrigger className="w-full max-w-[160px]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -523,10 +523,10 @@ export default function Dashboard() {
                               </SelectContent>
                             </Select>
                           </td>
-                          <td className="px-6 py-4 text-sm text-muted-foreground">
+                          <td className="px-4 py-4 text-sm text-muted-foreground truncate">
                             {new Date(submission.created_at).toLocaleDateString('pt-BR')}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4">
                             <div className="flex items-center justify-end space-x-2">
                               <Dialog>
                                 <DialogTrigger asChild>
@@ -657,7 +657,7 @@ export default function Dashboard() {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Esta ação não pode be desfeita. A submissão será permanentemente removida.
+                                      Esta ação não pode ser desfeita. A submissão será permanentemente removida.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>

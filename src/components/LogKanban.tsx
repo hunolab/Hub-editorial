@@ -20,6 +20,7 @@ interface BookCard {
   createdAt: Date;
   expectedQuantity?: number;
   arrivedQuantity?: number;
+  previsaoChegada?: Date;
 }
 
 interface Column {
@@ -29,17 +30,17 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: 'devem-ser-enviados', title: 'Devem ser enviados', color: '#a5c8c9' }, // Trello-like soft gray
-  { id: 'na-grafica', title: 'Na gráfica', color: '#ffa72b' }, // Light blue
-  { id: 'chegou-na-editora', title: 'Chegou na editora', color: '#db6300' }, // Light yellow
-  { id: 'concluido', title: 'Concluído', color: '#166a7a' }, // Light green
+  { id: 'devem-ser-enviados', title: 'Devem ser enviados', color: '#a5c8c9' },
+  { id: 'na-grafica', title: 'Na gráfica', color: '#ffa72b' },
+  { id: 'chegou-na-editora', title: 'Chegou na editora', color: '#db6300' },
+  { id: 'concluido', title: 'Concluído', color: '#166a7a' },
 ];
 
 const Container = styled(Box)({
   display: 'flex',
   overflowX: 'auto',
   padding: '24px',
-  backgroundColor: 'hsla(210, 20%, 98%, 0.00)', // Trello-like background
+  backgroundColor: 'hsla(210, 20%, 98%, 0.00)',
   minHeight: '100vh',
   fontFamily: "'Inter', sans-serif",
 });
@@ -49,7 +50,7 @@ const HeaderContainer = styled(Box)({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '12px 24px',
-  backgroundColor: '#ffb319', // header logistica
+  backgroundColor: '#ffb319',
   color: '#fff',
   borderRadius: '8px 8px 0 0',
   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -76,7 +77,7 @@ const ColumnTitle = styled(Typography)({
   fontFamily: "'Inter', sans-serif",
   fontWeight: 600,
   fontSize: '16px',
-  color: '#000000ff', // Trello dark text
+  color: '#000000ff',
   padding: '8px',
   marginBottom: '8px',
 });
@@ -107,6 +108,23 @@ const StyledCard = styled('div')({
   },
 });
 
+const Badge = styled(Box)({
+  backgroundColor: '#f44336',
+  color: '#fff',
+  padding: '4px 8px',
+  borderRadius: '12px',
+  fontSize: '12px',
+  fontWeight: 'bold',
+  marginTop: '8px',
+  textAlign: 'center',
+  animation: 'blink 1s infinite',
+  '@keyframes blink': {
+    '0%': { opacity: 1 },
+    '50%': { opacity: 0.5 },
+    '100%': { opacity: 1 },
+  },
+});
+
 const Clock: React.FC = () => {
   const [ctime, setTime] = useState<string>(new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
 
@@ -134,6 +152,13 @@ const CustomCard: React.FC<{
   onEdit: (card: BookCard) => void;
   onDelete: (cardId: string) => void;
 }> = ({ card, index, onEdit, onDelete }) => {
+  const isEntregaProxima = () => {
+    if (!card.previsaoChegada) return false;
+    const hoje = new Date();
+    const diffDias = Math.ceil((card.previsaoChegada.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDias <= 10 && diffDias >= 0;
+  };
+
   return (
     <Draggable draggableId={card.id} index={index}>
       {(provided) => (
@@ -146,6 +171,11 @@ const CustomCard: React.FC<{
             <Typography variant="subtitle1" sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
               {card.nomeDoLivro}
             </Typography>
+            {card.previsaoChegada && (
+              <Typography variant="subtitle2" sx={{ color: '#f44336', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>
+                <strong>Previsão de Chegada:</strong> {card.previsaoChegada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+              </Typography>
+            )}
             <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
               <strong>ISBN:</strong> {card.isbn}
             </Typography>
@@ -174,6 +204,11 @@ const CustomCard: React.FC<{
                 <strong>Na Editora:</strong> {card.dataNaEditora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
               </Typography>
             )}
+            {isEntregaProxima() && (
+              <Badge>
+                Entrega Próxima!
+              </Badge>
+            )}
             <Button
               onClick={() => onEdit(card)}
               sx={{ color: '#b87a00ff', fontFamily: "'Inter', sans-serif", textTransform: 'none', fontWeight: 500 }}
@@ -195,7 +230,7 @@ const LogKanban: React.FC = () => {
     'concluido': [],
   });
   const [editingCard, setEditingCard] = useState<BookCard | null>(null);
-  const [newCard, setNewCard] = useState<Partial<BookCard>>({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined, dataNaGrafica: undefined, dataNaEditora: undefined });
+  const [newCard, setNewCard] = useState<Partial<BookCard>>({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined, dataNaGrafica: undefined, dataNaEditora: undefined, previsaoChegada: undefined });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(() => {
@@ -240,6 +275,7 @@ const LogKanban: React.FC = () => {
           arrivedQuantity: item.quantidade_chegada || undefined,
           dataNaGrafica: item.data_na_grafica ? new Date(item.data_na_grafica) : undefined,
           dataNaEditora: item.data_na_editora ? new Date(item.data_na_editora) : undefined,
+          previsaoChegada: item.previsao_chegada ? new Date(item.previsao_chegada) : undefined,
           createdAt: item.created_at ? new Date(item.created_at) : new Date(),
         };
 
@@ -275,6 +311,7 @@ const LogKanban: React.FC = () => {
             arrivedQuantity: payload.new.quantidade_chegada || undefined,
             dataNaGrafica: payload.new.data_na_grafica ? new Date(payload.new.data_na_grafica) : undefined,
             dataNaEditora: payload.new.data_na_editora ? new Date(payload.new.data_na_editora) : undefined,
+            previsaoChegada: payload.new.previsao_chegada ? new Date(payload.new.previsao_chegada) : undefined,
             createdAt: payload.new.created_at ? new Date(payload.new.created_at) : new Date(),
           };
           return {
@@ -299,6 +336,7 @@ const LogKanban: React.FC = () => {
                 arrivedQuantity: payload.new.quantidade_chegada || undefined,
                 dataNaGrafica: payload.new.data_na_grafica ? new Date(payload.new.data_na_grafica) : undefined,
                 dataNaEditora: payload.new.data_na_editora ? new Date(payload.new.data_na_editora) : undefined,
+                previsaoChegada: payload.new.previsao_chegada ? new Date(payload.new.previsao_chegada) : undefined,
                 createdAt: payload.new.created_at ? new Date(payload.new.created_at) : new Date(),
               };
               newBoardData[columnId][cardIndex] = updatedCard;
@@ -427,6 +465,7 @@ const LogKanban: React.FC = () => {
         quantidade_chegada: updatedCard.arrivedQuantity || null,
         data_na_grafica: updatedCard.dataNaGrafica ? updatedCard.dataNaGrafica.toISOString() : null,
         data_na_editora: updatedCard.dataNaEditora ? updatedCard.dataNaEditora.toISOString() : null,
+        previsao_chegada: updatedCard.previsaoChegada ? updatedCard.previsaoChegada.toISOString().split('T')[0] : null,
       })
       .eq('id', updatedCard.id);
 
@@ -472,6 +511,7 @@ const LogKanban: React.FC = () => {
             quantidade_esperada: newCard.expectedQuantity || null,
             data_na_grafica: newCard.dataNaGrafica ? newCard.dataNaGrafica.toISOString() : null,
             data_na_editora: newCard.dataNaEditora ? newCard.dataNaEditora.toISOString() : null,
+            previsao_chegada: newCard.previsaoChegada ? newCard.previsaoChegada.toISOString().split('T')[0] : null,
             status: 'devem-ser-enviados',
           },
         ])
@@ -497,6 +537,7 @@ const LogKanban: React.FC = () => {
         arrivedQuantity: data.quantidade_chegada || undefined,
         dataNaGrafica: data.data_na_grafica ? new Date(data.data_na_grafica) : undefined,
         dataNaEditora: data.data_na_editora ? new Date(data.data_na_editora) : undefined,
+        previsaoChegada: data.previsao_chegada ? new Date(data.previsao_chegada) : undefined,
         createdAt: data.created_at ? new Date(data.created_at) : new Date(),
       };
 
@@ -510,7 +551,7 @@ const LogKanban: React.FC = () => {
       });
 
       setIsCreateModalOpen(false);
-      setNewCard({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined, dataNaGrafica: undefined, dataNaEditora: undefined });
+      setNewCard({ nomeDoLivro: '', isbn: '', notaFiscal: '', expectedQuantity: undefined, dataNaGrafica: undefined, dataNaEditora: undefined, previsaoChegada: undefined });
     }
     isProcessingRef.current = false;
   };
@@ -602,7 +643,7 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -612,7 +653,7 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -622,7 +663,7 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -633,7 +674,7 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -644,18 +685,18 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
-              label="Data que foi enviado para grafica"
+              label="Data que foi enviado para gráfica"
               type="date"
               value={editingCard?.dataNaGrafica ? editingCard.dataNaGrafica.toISOString().split('T')[0] : ''}
               onChange={(e) => setEditingCard((prev) => prev ? { ...prev, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined } : null)}
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -666,7 +707,18 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Previsão de Chegada"
+              type="date"
+              value={editingCard?.previsaoChegada ? editingCard.previsaoChegada.toISOString().split('T')[0] : ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, previsaoChegada: e.target.value ? new Date(e.target.value) : undefined } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <Box sx={{ marginTop: 3, display: 'flex', gap: 2 }}>
@@ -735,7 +787,7 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -745,28 +797,28 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
-              label="Invoice Number (optional)"
+              label="Nota fiscal (opcional)"
               value={newCard.notaFiscal}
               onChange={(e) => setNewCard({ ...newCard, notaFiscal: e.target.value })}
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
-              label="Expected Quantity"
+              label="Quantidade Esperada"
               type="number"
               value={newCard.expectedQuantity ?? ''}
               onChange={(e) => setNewCard({ ...newCard, expectedQuantity: parseInt(e.target.value) || undefined })}
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -777,7 +829,7 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <TextField
@@ -788,7 +840,18 @@ const LogKanban: React.FC = () => {
               fullWidth
               margin="normal"
               InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
-              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Previsão de Chegada"
+              type="date"
+              value={newCard.previsaoChegada ? newCard.previsaoChegada.toISOString().split('T')[0] : ''}
+              onChange={(e) => setNewCard({ ...newCard, previsaoChegada: e.target.value ? new Date(e.target.value) : undefined })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' }, shrink: true }}
               className="border rounded-md"
             />
             <Box sx={{ marginTop: 3, display: 'flex', gap: 2 }}>

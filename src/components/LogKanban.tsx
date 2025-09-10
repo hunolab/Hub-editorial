@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
+import Grow from '@mui/material/Grow';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BookCard {
@@ -28,58 +29,83 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: 'devem-ser-enviados', title: 'Devem ser enviados', color: '#A5C9CA' },
-  { id: 'na-grafica', title: 'Na gráfica', color: '#FFA62B' },
-  { id: 'chegou-na-editora', title: 'Chegou na editora', color: '#DB6400' },
-  { id: 'concluido', title: 'Concluído', color: '#16697A' },
+  { id: 'devem-ser-enviados', title: 'Devem ser enviados', color: '#a5c8c9' }, // Trello-like soft gray
+  { id: 'na-grafica', title: 'Na gráfica', color: '#ffa72b' }, // Light blue
+  { id: 'chegou-na-editora', title: 'Chegou na editora', color: '#db6300' }, // Light yellow
+  { id: 'concluido', title: 'Concluído', color: '#166a7a' }, // Light green
 ];
 
-const Container = styled(Box)`
-  display: flex;
-  justify-content: space-around;
-  padding: 20px;
-  font-family: 'Poppins', sans-serif;
-`;
+const Container = styled(Box)({
+  display: 'flex',
+  overflowX: 'auto',
+  padding: '24px',
+  backgroundColor: 'hsla(210, 20%, 98%, 0.00)', // Trello-like background
+  minHeight: '100vh',
+  fontFamily: "'Inter', sans-serif",
+});
 
-const HeaderContainer = styled(Box)`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  margin-bottom: 10px;
-`;
+const HeaderContainer = styled(Box)({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '12px 24px',
+  backgroundColor: '#ffb319', // header logistica
+  color: '#fff',
+  borderRadius: '8px 8px 0 0',
+  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  marginBottom: '16px',
+});
 
-const ColumnContainer = styled(Box)<{ $backgroundColor: string }>`
-  background-color: ${(props) => props.$backgroundColor};
-  border-radius: 8px;
-  padding: 10px;
-  margin: 0 10px;
-  width: 345px;
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
-  font-family: 'Poppins', sans-serif;
-`;
+const ColumnContainer = styled(Box)<{ $backgroundColor: string }>(({ $backgroundColor }) => ({
+  backgroundColor: $backgroundColor,
+  borderRadius: '8px',
+  padding: '12px',
+  margin: '0 8px',
+  width: '300px',
+  minHeight: '400px',
+  display: 'flex',
+  flexDirection: 'column',
+  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+  transition: 'box-shadow 0.2s ease',
+  '&:hover': {
+    boxShadow: '0 3px 6px rgba(0, 0, 0, 0.15)',
+  },
+}));
 
-const ColumnTitle = styled(Typography)`
-  text-align: center;
-  margin-bottom: 15px;
-  font-family: 'Poppins', sans-serif;
-  color: #ffffff;
-`;
+const ColumnTitle = styled(Typography)({
+  fontFamily: "'Inter', sans-serif",
+  fontWeight: 600,
+  fontSize: '16px',
+  color: '#000000ff', // Trello dark text
+  padding: '8px',
+  marginBottom: '8px',
+});
 
-const ModalContent = styled(Box)`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 400px;
-  font-family: 'Poppins', sans-serif;
-`;
+const ModalContent = styled(Box)({
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  backgroundColor: '#fff',
+  padding: '24px',
+  borderRadius: '8px',
+  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+  width: '400px',
+  fontFamily: "'Inter', sans-serif",
+});
+
+const StyledCard = styled('div')({
+  backgroundColor: '#fff',
+  borderRadius: '6px',
+  padding: '12px',
+  marginBottom: '8px',
+  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+  transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+  '&:hover': {
+    boxShadow: '0 3px 6px rgba(0, 0, 0, 0.15)',
+    transform: 'translateY(-2px)',
+  },
+});
 
 const Clock: React.FC = () => {
   const [ctime, setTime] = useState<string>(new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
@@ -94,9 +120,8 @@ const Clock: React.FC = () => {
 
   return (
     <Typography
-      variant="h4"
-      className="font-poppins text-gray-800"
-      style={{ fontFamily: 'Poppins, sans-serif' }}
+      variant="h6"
+      sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, color: '#fff' }}
     >
       {ctime}
     </Typography>
@@ -112,63 +137,51 @@ const CustomCard: React.FC<{
   return (
     <Draggable draggableId={card.id} index={index}>
       {(provided) => (
-        <div
+        <StyledCard
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="bg-gray-200 w-60 h-64 rounded-lg mb-4 mx-auto"
         >
-          <div className="flex p-2 gap-1">
-            <div>
-              <span className="bg-teal-500 inline-block w-3 h-3 rounded-full" />
-            </div>
-            <div>
-              <span className="bg-orange-500 inline-block w-3 h-3 rounded-full" />
-            </div>
-            <div>
-              <span className="bg-indigo-500 inline-block w-3 h-3 rounded-full" />
-            </div>
-          </div>
-          <div className="card__content p-2">
-            <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
-              <strong>{card.nomeDoLivro}</strong>
+          <div className="card__content">
+            <Typography variant="subtitle1" sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
+              {card.nomeDoLivro}
             </Typography>
-            <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
+            <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
               <strong>ISBN:</strong> {card.isbn}
             </Typography>
             {card.notaFiscal && (
-              <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
+              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
                 <strong>NF:</strong> {card.notaFiscal}
               </Typography>
             )}
             {card.expectedQuantity !== undefined && (
-              <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
+              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
                 <strong>Solicitado:</strong> {card.expectedQuantity}
               </Typography>
             )}
             {card.arrivedQuantity !== undefined && (
-              <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
+              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
                 <strong>Entregue:</strong> {card.arrivedQuantity}
               </Typography>
             )}
             {card.dataNaGrafica && (
-              <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
+              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
                 <strong>Na Gráfica:</strong> {card.dataNaGrafica.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
               </Typography>
             )}
             {card.dataNaEditora && (
-              <Typography variant="body2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
+              <Typography variant="body2" sx={{ color: '#5e6c84', fontFamily: "'Inter', sans-serif" }}>
                 <strong>Na Editora:</strong> {card.dataNaEditora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
               </Typography>
             )}
             <Button
               onClick={() => onEdit(card)}
-              style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}
+              sx={{ color: '#b87a00ff', fontFamily: "'Inter', sans-serif", textTransform: 'none', fontWeight: 500 }}
             >
               Editar
             </Button>
           </div>
-        </div>
+        </StyledCard>
       )}
     </Draggable>
   );
@@ -190,7 +203,6 @@ const LogKanban: React.FC = () => {
   });
   const isProcessingRef = useRef<boolean>(false);
 
-  // Initialize audio for notification
   const notificationSound = new Audio('/notification.mp3');
 
   const enableAudio = () => {
@@ -201,7 +213,6 @@ const LogKanban: React.FC = () => {
   };
 
   useEffect(() => {
-    // Fetch initial data
     async function fetchData() {
       const { data, error } = await supabase
         .from('logistica')
@@ -245,12 +256,10 @@ const LogKanban: React.FC = () => {
 
     fetchData();
 
-    // Set up Supabase real-time subscription
     const channel = supabase
       .channel('logistica-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'logistica' }, (payload) => {
         setBoardData((prev) => {
-          // Check if card already exists to prevent duplicates
           const cardExists = Object.values(prev).flat().some((card) => card.id === payload.new.id);
           if (cardExists) return prev;
 
@@ -317,7 +326,6 @@ const LogKanban: React.FC = () => {
       })
       .subscribe();
 
-    // Clean up subscription on component unmount
     return () => {
       supabase.removeChannel(channel);
     };
@@ -359,8 +367,6 @@ const LogKanban: React.FC = () => {
         .from('logistica')
         .update({
           status: destination.droppableId,
-          data_na_grafica: updatedCard.dataNaGrafica ? updatedCard.dataNaGrafica.toISOString() : null,
-          data_na_editora: updatedCard.dataNaEditora ? updatedCard.dataNaEditora.toISOString() : null,
         })
         .eq('id', updatedCard.id);
 
@@ -495,7 +501,6 @@ const LogKanban: React.FC = () => {
       };
 
       setBoardData((prev) => {
-        // Check if card already exists to prevent duplicates
         const cardExists = prev['devem-ser-enviados'].some((card) => card.id === createdCard.id);
         if (cardExists) return prev;
         return {
@@ -511,29 +516,47 @@ const LogKanban: React.FC = () => {
   };
 
   return (
-    <>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+    <div>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
       <DragDropContext onDragEnd={onDragEnd}>
         <HeaderContainer>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Typography variant="h5" sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>
+            Log Literare
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <Button
               variant="contained"
               onClick={() => setIsCreateModalOpen(true)}
-              sx={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#000000ff', '&:hover': { backgroundColor: '#115293' } }}
+              sx={{
+                fontFamily: "'Inter', sans-serif",
+                backgroundColor: '#000000ff',
+                '&:hover': { backgroundColor: '#000000ff' },
+                borderRadius: '6px',
+                textTransform: 'none',
+                padding: '6px 16px',
+              }}
             >
-              Criar Card
+              Criar entrega
             </Button>
             {!audioEnabled && (
               <Button
                 variant="contained"
                 onClick={enableAudio}
-                sx={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }}
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  backgroundColor: '#008a73ff',
+                  '&:hover': { backgroundColor: '#008a73ff' },
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  padding: '6px 16px',
+                }}
               >
-                Habilitar Notificações de Áudio
+                Ativar Notificações
               </Button>
             )}
+            <Clock />
           </Box>
-          <Clock />
         </HeaderContainer>
         <Container>
           {columns.map((column) => (
@@ -563,195 +586,247 @@ const LogKanban: React.FC = () => {
           ))}
         </Container>
 
-        {isModalOpen && editingCard && (
-          <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-            <ModalContent>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Poppins, sans-serif' }}>
-                Editar Card
-              </Typography>
-              <TextField
-                label="Nome do Livro"
-                value={editingCard.nomeDoLivro}
-                onChange={(e) => setEditingCard({ ...editingCard, nomeDoLivro: e.target.value })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="ISBN"
-                value={editingCard.isbn}
-                onChange={(e) => setEditingCard({ ...editingCard, isbn: e.target.value })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Nota Fiscal (opcional)"
-                value={editingCard.notaFiscal || ''}
-                onChange={(e) => setEditingCard({ ...editingCard, notaFiscal: e.target.value })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Quantidade Esperada"
-                type="number"
-                value={editingCard.expectedQuantity ?? ''}
-                onChange={(e) => setEditingCard({ ...editingCard, expectedQuantity: parseInt(e.target.value) || undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Quantidade Chegada"
-                type="number"
-                value={editingCard.arrivedQuantity ?? ''}
-                onChange={(e) => setEditingCard({ ...editingCard, arrivedQuantity: parseInt(e.target.value) || undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Data na Gráfica (opcional)"
-                type="date"
-                value={editingCard.dataNaGrafica ? editingCard.dataNaGrafica.toISOString().split('T')[0] : ''}
-                onChange={(e) => setEditingCard({ ...editingCard, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Data na Editora (opcional)"
-                type="date"
-                value={editingCard.dataNaEditora ? editingCard.dataNaEditora.toISOString().split('T')[0] : ''}
-                onChange={(e) => setEditingCard({ ...editingCard, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <Box sx={{ marginTop: 2, display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => editingCard && handleSaveCard(editingCard)}
-                  sx={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Salvar
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={() => editingCard && handleDeleteCard(editingCard.id)}
-                  sx={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Deletar
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => setIsModalOpen(false)}
-                  sx={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Cancelar
-                </Button>
-              </Box>
-            </ModalContent>
-          </Modal>
-        )}
+        <Modal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          TransitionComponent={Grow}
+        >
+          <ModalContent>
+            <Typography variant="h6" gutterBottom sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
+              Editar entrega
+            </Typography>
+            <TextField
+              label="Book Title"
+              value={editingCard?.nomeDoLivro || ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, nomeDoLivro: e.target.value } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="ISBN"
+              value={editingCard?.isbn || ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, isbn: e.target.value } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Nota fiscal (opcional)"
+              value={editingCard?.notaFiscal || ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, notaFiscal: e.target.value } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Qtd Esperada"
+              type="number"
+              value={editingCard?.expectedQuantity ?? ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, expectedQuantity: parseInt(e.target.value) || undefined } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Qtd que chegou"
+              type="number"
+              value={editingCard?.arrivedQuantity ?? ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, arrivedQuantity: parseInt(e.target.value) || undefined } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Data que foi enviado para grafica"
+              type="date"
+              value={editingCard?.dataNaGrafica ? editingCard.dataNaGrafica.toISOString().split('T')[0] : ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Chegou na editora"
+              type="date"
+              value={editingCard?.dataNaEditora ? editingCard.dataNaEditora.toISOString().split('T')[0] : ''}
+              onChange={(e) => setEditingCard((prev) => prev ? { ...prev, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined } : null)}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <Box sx={{ marginTop: 3, display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => editingCard && handleSaveCard(editingCard)}
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  backgroundColor: '#000000ff',
+                  '&:hover': { backgroundColor: '#000000ff' },
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  padding: '6px 16px',
+                }}
+              >
+                Salvar
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => editingCard && handleDeleteCard(editingCard.id)}
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  backgroundColor: '#eb5a46',
+                  '&:hover': { backgroundColor: '#d94430' },
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  padding: '6px 16px',
+                }}
+              >
+                Delete
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setIsModalOpen(false)}
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  borderColor: '#091e4221',
+                  color: '#030303ff',
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  padding: '6px 16px',
+                }}
+              >
+                Cancelar
+              </Button>
+            </Box>
+          </ModalContent>
+        </Modal>
 
-        {isCreateModalOpen && (
-          <Modal open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}>
-            <ModalContent>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: 'Poppins, sans-serif' }}>
-                Criar Novo Card
-              </Typography>
-              <TextField
-                label="Nome do Livro"
-                value={newCard.nomeDoLivro}
-                onChange={(e) => setNewCard({ ...newCard, nomeDoLivro: e.target.value })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="ISBN"
-                value={newCard.isbn}
-                onChange={(e) => setNewCard({ ...newCard, isbn: e.target.value })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Nota Fiscal (opcional)"
-                value={newCard.notaFiscal}
-                onChange={(e) => setNewCard({ ...newCard, notaFiscal: e.target.value })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Quantidade Esperada"
-                type="number"
-                value={newCard.expectedQuantity ?? ''}
-                onChange={(e) => setNewCard({ ...newCard, expectedQuantity: parseInt(e.target.value) || undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Data na Gráfica (opcional)"
-                type="date"
-                value={newCard.dataNaGrafica ? newCard.dataNaGrafica.toISOString().split('T')[0] : ''}
-                onChange={(e) => setNewCard({ ...newCard, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <TextField
-                label="Data na Editora (opcional)"
-                type="date"
-                value={newCard.dataNaEditora ? newCard.dataNaEditora.toISOString().split('T')[0] : ''}
-                onChange={(e) => setNewCard({ ...newCard, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined })}
-                fullWidth
-                margin="normal"
-                InputProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-                InputLabelProps={{ style: { fontFamily: 'Poppins, sans-serif' } }}
-              />
-              <Box sx={{ marginTop: 2 }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleCreateCard}
-                  sx={{ marginRight: 1, fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Criar
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  sx={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Cancelar
-                </Button>
-              </Box>
-            </ModalContent>
-          </Modal>
-        )}
+        <Modal
+          open={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          TransitionComponent={Grow}
+        >
+          <ModalContent>
+            <Typography variant="h6" gutterBottom sx={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, color: '#172b4d' }}>
+              Criar entrega
+            </Typography>
+            <TextField
+              label="Nome do livro"
+              value={newCard.nomeDoLivro}
+              onChange={(e) => setNewCard({ ...newCard, nomeDoLivro: e.target.value })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="ISBN"
+              value={newCard.isbn}
+              onChange={(e) => setNewCard({ ...newCard, isbn: e.target.value })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Invoice Number (optional)"
+              value={newCard.notaFiscal}
+              onChange={(e) => setNewCard({ ...newCard, notaFiscal: e.target.value })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Expected Quantity"
+              type="number"
+              value={newCard.expectedQuantity ?? ''}
+              onChange={(e) => setNewCard({ ...newCard, expectedQuantity: parseInt(e.target.value) || undefined })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Enviado para gráfica"
+              type="date"
+              value={newCard.dataNaGrafica ? newCard.dataNaGrafica.toISOString().split('T')[0] : ''}
+              onChange={(e) => setNewCard({ ...newCard, dataNaGrafica: e.target.value ? new Date(e.target.value) : undefined })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <TextField
+              label="Chegou na Editora"
+              type="date"
+              value={newCard.dataNaEditora ? newCard.dataNaEditora.toISOString().split('T')[0] : ''}
+              onChange={(e) => setNewCard({ ...newCard, dataNaEditora: e.target.value ? new Date(e.target.value) : undefined })}
+              fullWidth
+              margin="normal"
+              InputProps={{ style: { fontFamily: "'Inter', sans-serif" } }}
+              InputLabelProps={{ style: { fontFamily: "'Inter', sans-serif", color: '#5e6c84' } }}
+              className="border rounded-md"
+            />
+            <Box sx={{ marginTop: 3, display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCreateCard}
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  backgroundColor: '#000000ff',
+                  '&:hover': { backgroundColor: '#000000ff' },
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  padding: '6px 16px',
+                }}
+              >
+                Create
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setIsCreateModalOpen(false)}
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  borderColor: '#091e4221',
+                  color: '#172b4d',
+                  borderRadius: '6px',
+                  textTransform: 'none',
+                  padding: '6px 16px',
+                }}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </ModalContent>
+        </Modal>
       </DragDropContext>
-    </>
+    </div>
   );
 };
 

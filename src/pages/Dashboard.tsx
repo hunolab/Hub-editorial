@@ -25,13 +25,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
 import CalculadoraEditorial from '@/pages/Calculadora';
 import { AnimatedThemeToggler } from "@/components/ui/magicui/animated-theme-toggler";
 import LogKanban from '@/components/LogKanban';
+import Referencia from '@/pages/Referencia';
 
 gsap.registerPlugin(ScrollTrigger);
+
+interface Reference {
+  formatted: string;
+  fields: { [key: string]: string };
+  type: string;
+}
 
 interface Submission {
   id: string;
@@ -49,6 +56,7 @@ interface Submission {
   comments: string[];
   created_at: string;
   updated_at: string;
+  references: Reference[] | null;
 }
 
 const statusColors = {
@@ -76,7 +84,7 @@ export default function Dashboard() {
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('home'); // Estado para controlar a aba ativa
+  const [activeTab, setActiveTab] = useState('home');
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -140,7 +148,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('chapter_submissions')
-        .select('id, author_name, author_email, submission_type, chapter_title, chapter_content, curriculum, summary, cover_text, photo_file_url, book_coordinator, status, comments, created_at, updated_at')
+        .select('id, author_name, author_email, submission_type, chapter_title, chapter_content, curriculum, summary, cover_text, photo_file_url, book_coordinator, status, comments, created_at, updated_at, "references"')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -249,16 +257,15 @@ export default function Dashboard() {
     try {
       const doc = new Document({
         sections: [{
+          properties: {},
           children: [
+            // Título do capítulo
             new Paragraph({
-              children: [
-                new TextRun({
-                  text: submission.chapter_title || "Capítulo sem título",
-                  bold: true,
-                  size: 32,
-                }),
-              ],
+              text: submission.chapter_title || "Capítulo sem título",
+              heading: HeadingLevel.HEADING_1,
+              spacing: { after: 240 },
             }),
+            // Autor
             new Paragraph({
               children: [
                 new TextRun({
@@ -267,16 +274,45 @@ export default function Dashboard() {
                   size: 24,
                 }),
               ],
+              spacing: { after: 240 },
             }),
-            new Paragraph({ text: "" }),
+            // Conteúdo do capítulo
+            ...submission.chapter_content.split('\n').map(line => new Paragraph({
+              children: [new TextRun({ text: line, size: 24 })],
+              spacing: { after: 200 },
+            })),
+            // Resumo
             new Paragraph({
-              children: [
-                new TextRun({
-                  text: submission.chapter_content,
-                  size: 24,
-                }),
-              ],
+              text: "Resumo",
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 400, after: 240 },
             }),
+            ...submission.summary.split('\n').map(line => new Paragraph({
+              children: [new TextRun({ text: line, size: 24 })],
+              spacing: { after: 200 },
+            })),
+            // Currículo
+            new Paragraph({
+              text: "Currículo",
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 400, after: 240 },
+            }),
+            ...submission.curriculum.split('\n').map(line => new Paragraph({
+              children: [new TextRun({ text: line, size: 24 })],
+              spacing: { after: 200 },
+            })),
+            // Referências Bibliográficas
+            ...(submission.references && submission.references.length > 0 ? [
+              new Paragraph({
+                text: "Referências Bibliográficas",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 400, after: 240 },
+              }),
+              ...submission.references.map(ref => new Paragraph({
+                children: [new TextRun({ text: ref.formatted, size: 24 })],
+                spacing: { after: 200 },
+              })),
+            ] : []),
           ],
         }],
       });
@@ -327,7 +363,7 @@ export default function Dashboard() {
               onClick={() => setActiveTab('kanban')}
               className={activeTab === 'kanban' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
             >
-              Logistica
+              Logística
             </Button>
             <Button
               variant={activeTab === 'calculadora' ? 'default' : 'outline'}
@@ -335,6 +371,13 @@ export default function Dashboard() {
               className={activeTab === 'calculadora' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
             >
               Calculadora Editorial
+            </Button>
+            <Button
+              variant={activeTab === 'referencia' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('referencia')}
+              className={activeTab === 'referencia' ? 'bg-primary text-primary-foreground' : 'text-foreground'}
+            >
+              Referência
             </Button>
           </nav>
         </div>
@@ -540,7 +583,19 @@ export default function Dashboard() {
                                       <span>{submission.chapter_title || 'Capítulo sem título'}</span>
                                     </DialogTitle>
                                     <DialogDescription>
-                                      Detalhes completos da submissão
+                                      Detalhes completos da submissão, incluindo autor, tipo, conteúdo, resumo, currículo e referências bibliográficas.
+                                      {submission.references && submission.references.length > 0 && (
+                                        <div className="mt-2">
+                                          <strong>Referências Bibliográficas:</strong>
+                                          <ul className="list-disc pl-5 mt-1 space-y-1">
+                                            {submission.references.map((ref, index) => (
+                                              <li key={index} className="text-sm text-foreground">
+                                                {ref.formatted}
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
                                     </DialogDescription>
                                   </DialogHeader>
                                   {selectedSubmission && (
@@ -693,10 +748,9 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Renderiza o LogKanban quando a aba 'kanban' estiver ativa */}
         {activeTab === 'kanban' && <LogKanban />}
-
         {activeTab === 'calculadora' && <CalculadoraEditorial />}
+        {activeTab === 'referencia' && <Referencia />}
       </div>
     </div>
   );

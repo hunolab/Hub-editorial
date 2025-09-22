@@ -239,7 +239,7 @@ export default function Home() {
               <div className="hero-title">
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary-soft text-primary text-sm font-medium mb-4">
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Editorial Literare
+                  Seja Autor(a)
                 </span>
                 <h1 className="heading-hero text-foreground">
                   Editorial

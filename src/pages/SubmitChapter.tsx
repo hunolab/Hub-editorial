@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -23,6 +25,19 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { gsap } from 'gsap';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+
+// Carregar a biblioteca docx via CDN
+const loadDocx = () => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js';
+    script.async = true;
+    script.onload = () => resolve(window.docx);
+    script.onerror = () => reject(new Error('Falha ao carregar a biblioteca docx'));
+    document.body.appendChild(script);
+  });
+};
 
 type SubmissionType = 'solo' | 'coautoria';
 
@@ -37,7 +52,82 @@ interface FormData {
   coverText: string;
   photoFile: File | null;
   bookCoordinator?: string;
+  hasReferences: boolean;
+  references: Array<{ formatted: string; fields: ReferenceFields; type: string }>;
 }
+
+interface MaterialType {
+  label: string;
+  value: string;
+}
+
+interface ReferenceFields {
+  [key: string]: string;
+}
+
+const materialTypes: MaterialType[] = [
+  { label: "Livro", value: "book" },
+  { label: "Capítulo de Livro", value: "book-chapter" },
+  { label: "Artigo de Periódico", value: "article-or-section-of-periodical" },
+  { label: "Website", value: "website" },
+];
+
+const fieldDefinitions: { [key: string]: { required: string[]; optional: string[] } } = {
+  book: {
+    required: ["autor", "titulo", "cidade", "editora", "ano"],
+    optional: ["subtitulo", "edicao", "isbn"],
+  },
+  "book-chapter": {
+    required: ["autor_capitulo", "titulo_capitulo", "autor_livro", "titulo_livro", "cidade", "editora", "ano", "paginas"],
+    optional: ["subtitulo_capitulo", "subtitulo_livro", "edicao", "isbn"],
+  },
+  "article-or-section-of-periodical": {
+    required: ["autor", "titulo_artigo", "titulo_periodico", "ano", "volume", "numero", "paginas"],
+    optional: ["subtitulo_artigo", "doi", "url"],
+  },
+  website: {
+    required: ["autor", "titulo_pagina", "nome_site", "ano", "url"],
+    optional: ["data_acesso"],
+  },
+};
+
+const formatAuthorName = (author: string): string => {
+  if (!author) return "";
+  const authors = author.split(";").map((a) => a.trim());
+  return authors
+    .map((a) => {
+      const parts = a.split(" ").filter((p) => p);
+      if (parts.length < 2) return "";
+      const surname = parts[parts.length - 1];
+      const firstName = parts[0];
+      const initial = firstName.charAt(0).toUpperCase() + ".";
+      return `${surname.toUpperCase()}, ${initial}`;
+    })
+    .filter((a) => a)
+    .join("; ");
+};
+
+const formatReference = (fields: ReferenceFields, type: MaterialType): string => {
+  const { value: typeValue } = type;
+  const currentDate = new Date().toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  switch (typeValue) {
+    case "book":
+      return `${formatAuthorName(fields.autor)}. ${fields.titulo}. ${fields.cidade}: ${fields.editora}, ${fields.ano}.`;
+    case "book-chapter":
+      return `${formatAuthorName(fields.autor_capitulo)}. ${fields.titulo_capitulo}. In: ${formatAuthorName(fields.autor_livro)}. ${fields.titulo_livro}. ${fields.cidade}: ${fields.editora}, ${fields.ano}. p. ${fields.paginas}.`;
+    case "article-or-section-of-periodical":
+      return `${formatAuthorName(fields.autor)}. ${fields.titulo_artigo}. ${fields.titulo_periodico}, ${fields.cidade}, v. ${fields.volume}, n. ${fields.numero}, p. ${fields.paginas}, ${fields.ano}. ${fields.doi ? `DOI: ${fields.doi}` : ""}`;
+    case "website":
+      return `${formatAuthorName(fields.autor)}. ${fields.titulo_pagina}. ${fields.nome_site}, ${fields.ano}. Disponível em: ${fields.url}. Acesso em: ${fields.data_acesso || currentDate}.`;
+    default:
+      return "Tipo de material não suportado.";
+  }
+};
 
 export default function SubmitChapter() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -58,7 +148,12 @@ export default function SubmitChapter() {
     coverText: '',
     photoFile: null,
     bookCoordinator: '',
+    hasReferences: false,
+    references: [],
   });
+
+  const [currentReference, setCurrentReference] = useState<ReferenceFields>({});
+  const [selectedMaterialType, setSelectedMaterialType] = useState<MaterialType | null>(null);
 
   useEffect(() => {
     if (formRef.current) {
@@ -69,13 +164,102 @@ export default function SubmitChapter() {
     }
   }, [currentStep]);
 
-  // Clear chapterContent error when submission type changes
   useEffect(() => {
     setErrors(prev => ({ ...prev, chapterContent: '' }));
   }, [formData.submissionType]);
 
   const getCharacterCount = (text: string): number => {
-    return text.length; // Counts all characters, including spaces
+    return text.length;
+  };
+
+  const validateReference = (): boolean => {
+    if (!selectedMaterialType) {
+      setErrors(prev => ({ ...prev, referenceType: 'Selecione um tipo de material' }));
+      return false;
+    }
+    const requiredFields = fieldDefinitions[selectedMaterialType.value]?.required || [];
+    const missingFields = requiredFields.filter((field) => !currentReference[field]?.trim());
+    if (missingFields.length > 0) {
+      setErrors(prev => ({ ...prev, referenceFields: `Preencha todos os campos obrigatórios: ${missingFields.join(", ")}` }));
+      return false;
+    }
+    return true;
+  };
+
+  const addReference = () => {
+    if (!validateReference()) return;
+
+    const formatted = formatReference(currentReference, selectedMaterialType!);
+    setFormData(prev => ({
+      ...prev,
+      references: [...prev.references, { formatted, fields: currentReference, type: selectedMaterialType!.value }],
+    }));
+    setCurrentReference({});
+    setSelectedMaterialType(null);
+    setErrors(prev => ({ ...prev, referenceType: '', referenceFields: '' }));
+    toast({
+      title: "Referência adicionada",
+      description: "Referência formatada em ABNT foi adicionada à lista.",
+    });
+  };
+
+  const removeReference = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      references: prev.references.filter((_, i) => i !== index),
+    }));
+    toast({
+      title: "Referência removida",
+      description: "Referência foi removida da lista.",
+    });
+  };
+
+  const generateDocx = async () => {
+    await loadDocx();
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          // Título do capítulo (se fornecido)
+          ...(formData.chapterTitle ? [
+            new Paragraph({
+              text: formData.chapterTitle,
+              heading: HeadingLevel.HEADING_1,
+              spacing: { after: 240 },
+            }),
+          ] : []),
+          // Conteúdo do capítulo
+          ...formData.chapterContent.split('\n').map(line => new Paragraph({
+            children: [new TextRun(line)],
+            spacing: { after: 200 },
+          })),
+          // Seção de referências (se houver)
+          ...(formData.hasReferences && formData.references.length > 0 ? [
+            new Paragraph({
+              text: "Referências Bibliográficas",
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 400, after: 240 },
+            }),
+            ...formData.references.map(ref => new Paragraph({
+              children: [new TextRun(ref.formatted)],
+              spacing: { after: 200 },
+            })),
+          ] : []),
+        ],
+      }],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `chapter_submission_${Date.now()}.docx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const validateStep = (step: number): boolean => {
@@ -109,6 +293,9 @@ export default function SubmitChapter() {
           if (formData.submissionType === 'coautoria' && (charCount < 8000 || charCount > 13000)) {
             newErrors.chapterContent = 'Para coautoria, o capítulo deve ter entre 8.000 e 13.000 caracteres';
           }
+        }
+        if (formData.hasReferences && formData.references.length === 0) {
+          newErrors.references = 'Adicione pelo menos uma referência bibliográfica';
         }
         break;
 
@@ -215,6 +402,7 @@ export default function SubmitChapter() {
           cover_text: formData.coverText || null,
           photo_file_url: photoUrl || null,
           book_coordinator: formData.bookCoordinator || null,
+          "references": formData.references.length > 0 ? formData.references : null,
           status: 'novo',
           comments: [],
           created_at: new Date().toISOString(),
@@ -226,9 +414,12 @@ export default function SubmitChapter() {
         throw new Error(`Erro ao enviar submissão: ${error.message}`);
       }
 
+      // Gerar o arquivo .docx
+      await generateDocx();
+
       toast({
         title: "Capítulo enviado com sucesso!",
-        description: "Obrigado pela submissão. Entraremos em contato em breve.",
+        description: "Obrigado pela submissão. O arquivo .docx foi baixado. Entraremos em contato em breve.",
       });
 
       setFormData({
@@ -242,7 +433,11 @@ export default function SubmitChapter() {
         coverText: '',
         photoFile: null,
         bookCoordinator: '',
+        hasReferences: false,
+        references: [],
       });
+      setCurrentReference({});
+      setSelectedMaterialType(null);
       setCurrentStep(1);
       navigate('/');
     } catch (error: any) {
@@ -484,6 +679,131 @@ export default function SubmitChapter() {
                     </Alert>
                   )}
                 </div>
+
+                <div className="space-y-2 form-field">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hasReferences"
+                      checked={formData.hasReferences}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasReferences: !!checked, references: checked ? prev.references : [] }))}
+                      aria-label="Capítulo contém referências bibliográficas"
+                    />
+                    <Label htmlFor="hasReferences" className="font-medium">
+                      Seu capítulo contém referências bibliográficas?
+                    </Label>
+                  </div>
+                </div>
+
+                {formData.hasReferences && (
+                  <div className="space-y-4 form-field">
+                    <Label className="font-medium">Adicionar Referência (ABNT)</Label>
+                    <div className="space-y-2">
+                      <Select
+                        value={selectedMaterialType?.value || ""}
+                        onValueChange={(value) => {
+                          const selected = materialTypes.find((m) => m.value === value);
+                          setSelectedMaterialType(selected || null);
+                          setCurrentReference({});
+                          setErrors(prev => ({ ...prev, referenceType: '', referenceFields: '' }));
+                        }}
+                      >
+                        <SelectTrigger className="input-editorial">
+                          <SelectValue placeholder="Selecione o tipo de material" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {materialTypes.map((m) => (
+                            <SelectItem key={m.value} value={m.value}>
+                              {m.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.referenceType && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>{errors.referenceType}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+
+                    {selectedMaterialType && (
+                      <div className="space-y-4">
+                        {fieldDefinitions[selectedMaterialType.value]?.required.map((field) => (
+                          <div key={field} className="space-y-2">
+                            <Label className="text-sm text-muted-foreground">
+                              {field.replace(/_/g, " ")}*
+                            </Label>
+                            <Input
+                              value={currentReference[field] || ""}
+                              onChange={(e) => setCurrentReference(prev => ({ ...prev, [field]: e.target.value }))}
+                              placeholder={
+                                field.includes("autor")
+                                  ? "Ex.: Yuri Alberto"
+                                  : `Digite ${field.replace(/_/g, " ")}`
+                              }
+                              className="input-editorial"
+                              aria-label={`Campo ${field.replace(/_/g, " ")}`}
+                            />
+                          </div>
+                        ))}
+                        {fieldDefinitions[selectedMaterialType.value]?.optional.map((field) => (
+                          <div key={field} className="space-y-2">
+                            <Label className="text-sm text-muted-foreground">
+                              {field.replace(/_/g, " ")}
+                            </Label>
+                            <Input
+                              value={currentReference[field] || ""}
+                              onChange={(e) => setCurrentReference(prev => ({ ...prev, [field]: e.target.value }))}
+                              placeholder={
+                                field.includes("autor")
+                                  ? "Ex.: Memphis Depay (opcional)"
+                                  : `Digite ${field.replace(/_/g, " ")} (opcional)`
+                              }
+                              className="input-editorial"
+                              aria-label={`Campo ${field.replace(/_/g, " ")} (opcional)`}
+                            />
+                          </div>
+                        ))}
+                        {errors.referenceFields && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{errors.referenceFields}</AlertDescription>
+                          </Alert>
+                        )}
+                        <Button onClick={addReference} className="btn-editorial">
+                          Adicionar Referência
+                        </Button>
+                      </div>
+                    )}
+
+                    {formData.references.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="font-medium">Referências Adicionadas</Label>
+                        <ul className="space-y-2">
+                          {formData.references.map((ref, index) => (
+                            <li key={index} className="flex items-center justify-between p-2 bg-muted/20 rounded-md">
+                              <span className="text-sm">{ref.formatted}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeReference(index)}
+                                className="btn-outline-editorial"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {errors.references && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{errors.references}</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

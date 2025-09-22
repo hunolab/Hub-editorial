@@ -11,6 +11,7 @@ import SubmitChapter from "./pages/SubmitChapter";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import CalculadoraEditorial from './pages/Calculadora';
+import ReferenceFormatter from "./pages/referencia";
 
 const queryClient = new QueryClient();
 

@@ -310,11 +310,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-soft-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-soft-background py-8 overflow-x-hidden">
+      <div className="max-w-full w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Abas */}
         <div className="mb-6">
-          <nav className="flex space-x-4">
+          <nav className="flex space-x-4 flex-wrap">
             <Button
               variant={activeTab === 'home' ? 'default' : 'outline'}
               onClick={() => setActiveTab('home')}
@@ -342,7 +342,7 @@ export default function Dashboard() {
         {/* Conteúdo da Aba */}
         {activeTab === 'home' && (
           <>
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-8 flex items-center justify-between w-full">
               <div>
                 <h1 className="heading-lg text-foreground mb-2">
                   Editorial
@@ -355,8 +355,8 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card className="card-editorial">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 w-full">
+              <Card className="card-editorial w-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Total de Submissões
@@ -369,7 +369,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="card-editorial">
+              <Card className="card-editorial w-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Novas
@@ -382,7 +382,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="card-editorial">
+              <Card className="card-editorial w-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Em Análise
@@ -395,7 +395,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="card-editorial">
+              <Card className="card-editorial w-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Concluídas
@@ -410,9 +410,9 @@ export default function Dashboard() {
             </div>
 
             {/* Filters */}
-            <Card className="card-editorial mb-8">
+            <Card className="card-editorial mb-8 w-full">
               <CardContent className="pt-6">
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4 w-full">
                   <div className="flex-1">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -420,13 +420,13 @@ export default function Dashboard() {
                         placeholder="Buscar por nome, email, título, livro/coordenador..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 input-editorial"
+                        className="pl-9 input-editorial w-full"
                       />
                     </div>
                   </div>
                   <div className="w-48">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="input-editorial">
+                      <SelectTrigger className="input-editorial w-full">
                         <SelectValue placeholder="Filtrar por status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -444,31 +444,31 @@ export default function Dashboard() {
             </Card>
 
             {/* Submissions Table */}
-            <Card className="card-editorial" ref={tableRef}>
+            <Card className="card-editorial w-full" ref={tableRef}>
               <CardContent className="p-0">
-                <div className="w-full">
-                  <table className="w-full table-auto">
+                <div className="w-full box-border">
+                  <table className="w-full table-fixed">
                     <thead className="bg-muted/50">
                       <tr>
-                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[150px] max-w-[200px]">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Autor
                         </th>
-                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[100px] max-w-[120px]">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Tipo
                         </th>
-                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[200px] max-w-[250px]">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Título
                         </th>
-                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[150px] max-w-[200px]">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Livro/Coordenação
                         </th>
-                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[120px] max-w-[160px]">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Status
                         </th>
-                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground min-w-[100px] max-w-[120px]">
+                        <th className="px-4 py-4 text-left text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Data
                         </th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-muted-foreground min-w-[120px] max-w-[140px]">
+                        <th className="px-4 py-4 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
                           Ações
                         </th>
                       </tr>
@@ -477,11 +477,11 @@ export default function Dashboard() {
                       {filteredSubmissions.map((submission) => (
                         <tr key={submission.id} className="submission-row hover:bg-muted/20 transition-colors">
                           <td className="px-4 py-4">
-                            <div className="overflow-hidden">
-                              <div className="font-medium text-foreground truncate">
+                            <div className="overflow-hidden text-ellipsis whitespace-normal">
+                              <div className="font-medium text-foreground break-words">
                                 {submission.author_name}
                               </div>
-                              <div className="text-sm text-muted-foreground truncate">
+                              <div className="text-sm text-muted-foreground break-words">
                                 {submission.author_email}
                               </div>
                             </div>
@@ -492,17 +492,12 @@ export default function Dashboard() {
                             </Badge>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="max-w-[250px]">
-                              <div className="font-medium text-foreground truncate">
-                                {submission.chapter_title || 'Sem título'}
-                              </div>
-                              <div className="text-sm text-muted-foreground truncate">
-                                {submission.summary}
-                              </div>
+                            <div className="font-medium text-foreground break-words">
+                              {submission.chapter_title || 'Sem título'}
                             </div>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="text-sm text-foreground truncate">
+                            <div className="text-sm text-foreground break-words">
                               {submission.book_coordinator || 'Não informado'}
                             </div>
                           </td>
@@ -511,7 +506,7 @@ export default function Dashboard() {
                               value={submission.status}
                               onValueChange={(value) => updateStatus(submission.id, value)}
                             >
-                              <SelectTrigger className="w-full max-w-[160px]">
+                              <SelectTrigger className="w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -523,7 +518,7 @@ export default function Dashboard() {
                               </SelectContent>
                             </Select>
                           </td>
-                          <td className="px-4 py-4 text-sm text-muted-foreground truncate">
+                          <td className="px-4 py-4 text-sm text-muted-foreground break-words">
                             {new Date(submission.created_at).toLocaleDateString('pt-BR')}
                           </td>
                           <td className="px-4 py-4">

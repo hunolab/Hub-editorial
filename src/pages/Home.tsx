@@ -1,20 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { BookOpen, PenTool, Users, Award, ArrowRight, Sparkles } from 'lucide-react';
+import { BookOpen, PenTool, Users, Award, Sparkles } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/ui/magicui/marquee";
 import { TextReveal } from "@/components/ui/magicui/text-reveal";
+import { motion } from 'framer-motion';
 
-
-
-// Registrar o plugin ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
 
-// Dados das avaliações
 const reviews = [
   {
     name: "Luiza",
@@ -30,7 +24,7 @@ const reviews = [
   },
   {
     name: "Hiram",
-    username: "@Hirambaroli",
+    username: "@hirambaroli",
     body: "Revisão de primeira!",
     img: "https://i.ibb.co/MkZyYCDw/3.png",
   },
@@ -48,13 +42,11 @@ const reviews = [
   },
 ];
 
-// Divisão das avaliações para as fileiras do Marquee
 const firstRow = reviews.slice(0, reviews.length / 2);
 const secondRow = reviews.slice(reviews.length / 2);
 const thirdRow = reviews.slice(0, reviews.length / 2);
 const fourthRow = reviews.slice(reviews.length / 2);
 
-// Componente ReviewCard
 const ReviewCard = ({
   img,
   name,
@@ -67,31 +59,30 @@ const ReviewCard = ({
   body: string;
 }) => {
   return (
-<figure
-  className={cn(
-    "relative w-fit sm:w-36 cursor-pointer rounded-xl border p-4",
-    "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
-    "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
-    "flex flex-col"
-  )}
->
-  <div className="flex flex-row items-center gap-2 mb-2">
-    <img className="rounded-full" width="32" height="32" alt="" src={img} />
-    <div className="flex flex-col">
-      <figcaption className="text-sm font-medium dark:text-white">
-        {name}
-      </figcaption>
-      <p className="text-xs font-sm dark:text-white/40">{username}</p>
-    </div>
-  </div>
-  <blockquote className="text-sm">
-    {body}
-  </blockquote>
-</figure>
+    <figure
+      className={cn(
+        "relative w-fit sm:w-36 cursor-pointer rounded-xl border p-4",
+        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
+        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+        "flex flex-col"
+      )}
+    >
+      <div className="flex flex-row items-center gap-2 mb-2">
+        <img className="rounded-full" width="32" height="32" alt="" src={img} />
+        <div className="flex flex-col">
+          <figcaption className="text-sm font-medium dark:text-white">
+            {name}
+          </figcaption>
+          <p className="text-xs font-sm dark:text-white/40">{username}</p>
+        </div>
+      </div>
+      <blockquote className="text-sm">
+        {body}
+      </blockquote>
+    </figure>
   );
 };
 
-// Componente Marquee3D
 const Marquee3D = () => {
   return (
     <div className="relative flex h-96 w-full flex-row items-center justify-center gap-4 overflow-hidden [perspective:300px]">
@@ -131,7 +122,27 @@ const Marquee3D = () => {
   );
 };
 
-// Componente Home
+const transitionVariants = {
+  item: {
+    hidden: { opacity: 0, filter: 'blur(12px)', y: 12 },
+    visible: { opacity: 1, filter: 'blur(0px)', y: 0, transition: { type: 'spring', bounce: 0.3, duration: 1.5 } },
+  },
+};
+
+const AnimatedGroup = ({ children, variants, className }: any) => {
+  return (
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      variants={variants}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -139,7 +150,6 @@ export default function Home() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animações do Hero
       gsap.fromTo('.hero-title', 
         { opacity: 0, y: 50 },
         { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }
@@ -149,18 +159,12 @@ export default function Home() {
         { opacity: 0, y: 30 },
         { opacity: 1, y: 0, duration: 1, delay: 0.2, ease: 'power3.out' }
       );
-      
-      gsap.fromTo('.hero-cta', 
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 1, delay: 0.4, ease: 'power3.out' }
-      );
 
       gsap.fromTo('.hero-marquee', 
         { opacity: 0, scale: 0.8 },
-        { opacity: 1, scale: 1, duration: 1.2, delay: 0.6, ease: 'power3.out' }
+        { opacity: 1, scale: 1, duration: 1.2, delay: 0.4, ease: 'power3.out' }
       );
 
-      // Animação flutuante para o Marquee
       gsap.to('.hero-marquee', {
         y: -10,
         duration: 3,
@@ -169,7 +173,6 @@ export default function Home() {
         ease: 'power2.inOut'
       });
 
-      // Animações das Features
       gsap.fromTo('.feature-card', 
         { opacity: 0, y: 50 },
         {
@@ -186,7 +189,6 @@ export default function Home() {
         }
       );
 
-      // Animação da seção CTA
       gsap.fromTo('.cta-content', 
         { opacity: 0, y: 30 },
         {
@@ -231,12 +233,23 @@ export default function Home() {
 
   return (
     <div ref={heroRef} className="min-h-screen">
+      {/* Fundo decorativo do Hero */}
+      <div
+        aria-hidden
+        className="z-[2] absolute inset-0 pointer-events-none isolate opacity-50 contain-strict hidden lg:block"
+      >
+        <div className="w-[35rem] h-[80rem] -translate-y-[350px] absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(0,0%,85%,.08)_0,hsla(0,0%,55%,.02)_50%,hsla(0,0%,45%,0)_80%)]" />
+        <div className="h-[80rem] absolute left-0 top-0 w-56 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] [translate:5%_-50%]" />
+        <div className="h-[80rem] -translate-y-[350px] absolute left-0 top-0 w-56 -rotate-45 bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.04)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)]" />
+      </div>
+
       {/* Seção Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-soft">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="text-center lg:text-left space-y-8">
-            <div className="space-y-4">
-              <div className="hero-title">
+      <section>
+        <div className="relative pt-24 md:pt-36">
+          <div aria-hidden className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--background)_75%)]" />
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
+              <AnimatedGroup variants={transitionVariants}>
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary-soft text-primary text-sm font-medium mb-4">
                   <Sparkles className="h-4 w-4 mr-2" />
                   Seja Autor(a)
@@ -247,30 +260,20 @@ export default function Home() {
                     Literare Books
                   </span>
                 </h1>
+                
+                <p className="hero-subtitle body-lg text-muted-foreground max-w-xl mx-auto">
+                  A Literare Books é uma editora moderna dedicada a descobrir e publicar 
+                  novos talentos literários. Junte-se a nós nessa jornada criativa.
+                </p>
+              </AnimatedGroup>
+
+              {/* BOTÕES REMOVIDOS AQUI */}
+            </div>
+
+            <div className="hero-marquee flex justify-center lg:justify-end mt-12">
+              <div className="relative">
+                <Marquee3D />
               </div>
-              
-              <p className="hero-subtitle body-lg text-muted-foreground max-w-xl">
-                A Literare Books é uma editora moderna dedicada a descobrir e publicar 
-                novos talentos literários. Junte-se a nós nessa jornada criativa.
-              </p>
-            </div>
-
-            <div className="hero-cta flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/submit">
-                <Button className="btn-hero group">
-                  Enviar seu Capítulo
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Button variant="outline" className="btn-outline-editorial">
-                Saiba Mais
-              </Button>
-            </div>
-          </div>
-
-          <div className="hero-marquee flex justify-center lg:justify-end">
-            <div className="relative">
-              <Marquee3D />
             </div>
           </div>
         </div>
@@ -291,7 +294,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="feature-card card-editorial p-6 text-center hover:card-hover">
+              <div key={index} className="feature-card p-6 text-center border rounded-lg hover:shadow-lg transition-shadow">
                 <div className="flex justify-center mb-4">
                   <div className="p-3 rounded-2xl bg-primary-soft">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -303,7 +306,7 @@ export default function Home() {
                 <p className="body-sm text-muted-foreground">
                   {feature.description}
                 </p>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -320,12 +323,11 @@ export default function Home() {
               Inicie sua jornada conosco hoje mesmo. Envie seu primeiro capítulo 
               e descubra o potencial da sua escrita.
             </p>
-            <Link to="/submit">
-              <Button className="btn-hero text-lg px-8 py-4">
+            <a href="/submit">
+              <button className="bg-primary text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-primary/90 transition">
                 Começar Agora
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+              </button>
+            </a>
           </div>
         </div>
       </section>

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, Suspense, lazy } from "react";
 import { UiverseLoader } from "@/components/UiverseLoader";
+import { SpeedInsights } from "@vercel/speed-insights/react"; // 
 
 // === ERROR BOUNDARY ===
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -26,7 +27,7 @@ const CalculadoraEditorial = lazy(() => import("./pages/Calculadora"));
 const ReferenceFormatter = lazy(() => import("./pages/referencia"));
 const Estoque = lazy(() => import("./pages/Estoque"));
 const LogKanban = lazy(() => import("./components/LogKanban"));
-const Revisor = lazy(() => import("./pages/Revisor")); // NOVA PÁGINA
+const Revisor = lazy(() => import("./pages/Revisor"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -47,18 +48,18 @@ const TransitionWrapper = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const link = target.closest('a');
-      if (link?.getAttribute('href') === '/dashboard' && location.pathname === '/') {
+      const link = target.closest("a");
+      if (link?.getAttribute("href") === "/dashboard" && location.pathname === "/") {
         e.preventDefault();
         setShowLoader(true);
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate("/dashboard");
           setTimeout(() => setShowLoader(false), 500);
         }, 1000);
       }
     };
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
   }, [location.pathname, navigate]);
 
   return (
@@ -79,12 +80,24 @@ const App = () => (
           fallback={
             <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-background">
               <div className="bg-destructive/10 text-destructive p-4 rounded-full mb-4">
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-12 h-12"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
               <h2 className="text-2xl font-bold mb-2">Erro inesperado</h2>
-              <p className="text-muted-foreground mb-4">Tente recarregar a página ou volte mais tarde.</p>
+              <p className="text-muted-foreground mb-4">
+                Tente recarregar a página ou volte mais tarde.
+              </p>
               <button
                 onClick={() => window.location.reload()}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
@@ -107,9 +120,33 @@ const App = () => (
             >
               <Routes>
                 {/* ROTAS PÚBLICAS */}
-                <Route path="/" element={<Layout><Navigation /><Home /></Layout>} />
-                <Route path="/login" element={<Layout><Navigation /><Login /></Layout>} />
-                <Route path="/submit" element={<Layout><Navigation /><SubmitChapter /></Layout>} />
+                <Route
+                  path="/"
+                  element={
+                    <Layout>
+                      <Navigation />
+                      <Home />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={
+                    <Layout>
+                      <Navigation />
+                      <Login />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/submit"
+                  element={
+                    <Layout>
+                      <Navigation />
+                      <SubmitChapter />
+                    </Layout>
+                  }
+                />
 
                 {/* DASHBOARD PROTEGIDO */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
@@ -118,12 +155,15 @@ const App = () => (
                   <Route path="referencia" element={<ReferenceFormatter />} />
                   <Route path="logistica" element={<LogKanban />} />
                   <Route path="estoque" element={<Estoque />} />
-                  <Route path="revisor" element={<Revisor />} /> {/* NOVA ROTA AQUI */}
+                  <Route path="revisor" element={<Revisor />} />
                 </Route>
 
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+
+              {/* ✅ Adiciona Speed Insights aqui, no final do App */}
+              <SpeedInsights />
             </Suspense>
           </TransitionWrapper>
         </ErrorBoundary>

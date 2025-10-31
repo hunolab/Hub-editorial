@@ -24,7 +24,7 @@ const Login = lazy(() => import("./pages/Login"));
 const SubmitChapter = lazy(() => import("./pages/SubmitChapter"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CalculadoraEditorial = lazy(() => import("./pages/Calculadora"));
-const ReferenceFormatter = lazy(() => import("./pages/referencia"));
+const ReferenceFormatter = lazy(() => import("./pages/Referencia"));
 const Estoque = lazy(() => import("./pages/Estoque"));
 const LogKanban = lazy(() => import("./components/LogKanban"));
 const Revisor = lazy(() => import("./pages/Revisor"));

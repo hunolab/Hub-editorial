@@ -8,6 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Plus, Minus } from 'lucide-react';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -32,7 +42,12 @@ export default function Estoque() {
     gaveta: '',
     quantidade: '',
   });
-  const [busca, setBusca] = useState(''); // <<< NOVO ESTADO DE BUSCA
+  const [busca, setBusca] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [livroSelecionado, setLivroSelecionado] = useState<EstoqueItem | null>(null);
+  const [quantidadeAdicionar, setQuantidadeAdicionar] = useState('');
+  const [quantidadeRetirar, setQuantidadeRetirar] = useState('');
+  const [modoRetirar, setModoRetirar] = useState(false);
 
   const { toast } = useToast();
 
@@ -138,7 +153,76 @@ export default function Estoque() {
     }
   }
 
-  // === FILTRO LOCAL POR ISBN OU TÍTULO ===
+  // === ABRIR MODAL ===
+  const abrirModal = (item: EstoqueItem) => {
+    setLivroSelecionado(item);
+    setQuantidadeAdicionar('');
+    setQuantidadeRetirar('');
+    setModoRetirar(false);
+    setModalOpen(true);
+  };
+
+  // === ADICIONAR NO MODAL ===
+  const handleAdicionar = async () => {
+    if (!livroSelecionado) return;
+    const qtd = parseInt(quantidadeAdicionar);
+    if (isNaN(qtd) || qtd <= 0) {
+      toast({ title: 'Erro', description: 'Digite uma quantidade válida', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('estoque')
+        .update({
+          quantidade: livroSelecionado.quantidade + qtd,
+          ultima_atualizacao: new Date().toISOString(),
+        })
+        .eq('id', livroSelecionado.id);
+
+      if (error) throw error;
+
+      toast({ title: 'Sucesso', description: `+${qtd} unidade(s) adicionada(s)` });
+      fetchEstoque();
+      setModalOpen(false);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  // === RETIRAR NO MODAL ===
+  const handleRetirar = async () => {
+    if (!livroSelecionado) return;
+    const qtd = parseInt(quantidadeRetirar);
+    if (isNaN(qtd) || qtd <= 0) {
+      toast({ title: 'Erro', description: 'Digite uma quantidade válida', variant: 'destructive' });
+      return;
+    }
+    if (qtd > livroSelecionado.quantidade) {
+      toast({ title: 'Erro', description: 'Quantidade maior que o estoque', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('estoque')
+        .update({
+          quantidade: livroSelecionado.quantidade - qtd,
+          ultima_atualizacao: new Date().toISOString(),
+        })
+        .eq('id', livroSelecionado.id);
+
+      if (error) throw error;
+
+      toast({ title: 'Sucesso', description: `-${qtd} unidade(s) retirada(s)` });
+      fetchEstoque();
+      setModalOpen(false);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  // === FILTRO LOCAL ===
   const itensFiltrados = itens.filter((item) => {
     const termo = busca.toLowerCase();
     return (
@@ -217,7 +301,11 @@ export default function Estoque() {
                 </TableHeader>
                 <TableBody>
                   {itensFiltrados.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => abrirModal(item)}
+                    >
                       <TableCell className="font-mono text-xs">{item.isbn}</TableCell>
                       <TableCell className="max-w-xs truncate">{item.titulo}</TableCell>
                       <TableCell>{item.gaveta}</TableCell>
@@ -233,6 +321,99 @@ export default function Estoque() {
           )}
         </CardContent>
       </Card>
+
+      {/* MODAL ELEGENTE */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{livroSelecionado?.titulo}</DialogTitle>
+            <DialogDescription>
+              Gerencie o estoque deste livro
+            </DialogDescription>
+          </DialogHeader>
+
+          {livroSelecionado && (
+            <div className="space-y-6 py-4">
+              {/* INFORMAÇÕES */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="text-muted-foreground">ISBN</Label>
+                  <p className="font-mono text-foreground">{livroSelecionado.isbn}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Gaveta</Label>
+                  <p className="font-medium">{livroSelecionado.gaveta}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Estoque Atual</Label>
+                  <p className="text-2xl font-bold text-primary">{livroSelecionado.quantidade}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Última Atualização</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(livroSelecionado.ultima_atualizacao), 'dd MMM yyyy, HH:mm', { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                {/* ADICIONAR */}
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor="adicionar">Adicionar ao estoque</Label>
+                    <div className="flex items-center gap-2">
+                      <Plus className="w-4 h-4 text-green-600" />
+                      <Input
+                        id="adicionar"
+                        type="number"
+                        min="1"
+                        placeholder="Quantidade"
+                        value={quantidadeAdicionar}
+                        onChange={(e) => setQuantidadeAdicionar(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={handleAdicionar} className="bg-green-600 hover:bg-green-700">
+                    Adicionar
+                  </Button>
+                </div>
+
+                {/* RETIRAR */}
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor="retirar">Retirar do estoque</Label>
+                    <div className="flex items-center gap-2">
+                      <Minus className="w-4 h-4 text-red-600" />
+                      <Input
+                        id="retirar"
+                        type="number"
+                        min="1"
+                        max={livroSelecionado.quantidade}
+                        placeholder={`Máx: ${livroSelecionado.quantidade}`}
+                        value={quantidadeRetirar}
+                        onChange={(e) => setQuantidadeRetirar(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleRetirar}
+                    variant="destructive"
+                    disabled={parseInt(quantidadeRetirar) > livroSelecionado.quantidade}
+                  >
+                    Retirar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

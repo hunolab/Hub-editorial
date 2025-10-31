@@ -263,13 +263,13 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard Editorial</h1>
-            <p className="text-muted-foreground">Genrenciador de Capitulos/</p>
+            <h1 className="text-3xl font-bold text-foreground">Editorial</h1>
+            <p className="text-muted-foreground">Genrenciador de Capitulos</p>
           </div>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
             <Link to="/submit">
               <Send className="h-5 w-5 mr-2" />
-              Nova Submissão
+              Nova Capitulo 
             </Link>
           </Button>
         </div>
@@ -293,8 +293,8 @@ export default function Dashboard() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Submissões Recentes</CardTitle>
-              <CardDescription>Últimas {recentSubmissions.length} submissões</CardDescription>
+              <CardTitle>Capítulos Recentes</CardTitle>
+              <CardDescription>Últimos {recentSubmissions.length} capítulos</CardDescription>
             </CardHeader>
             <CardContent>
               {recentSubmissions.length > 0 ? (
@@ -380,7 +380,7 @@ export default function Dashboard() {
                                   )}
 
                                   <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Comentários Internos</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Comentarios Equipe Editorial</label>
                                     <div className="mt-2 space-y-2">
                                       {selectedSubmission.comments.map((c, i) => (
                                         <div key={i} className="p-3 bg-muted/20 rounded-lg text-sm">{c}</div>

@@ -47,7 +47,6 @@ export default function Estoque() {
   const [livroSelecionado, setLivroSelecionado] = useState<EstoqueItem | null>(null);
   const [quantidadeAdicionar, setQuantidadeAdicionar] = useState('');
   const [quantidadeRetirar, setQuantidadeRetirar] = useState('');
-  const [modoRetirar, setModoRetirar] = useState(false);
 
   const { toast } = useToast();
 
@@ -158,7 +157,6 @@ export default function Estoque() {
     setLivroSelecionado(item);
     setQuantidadeAdicionar('');
     setQuantidadeRetirar('');
-    setModoRetirar(false);
     setModalOpen(true);
   };
 
@@ -224,12 +222,18 @@ export default function Estoque() {
 
   // === FILTRO LOCAL ===
   const itensFiltrados = itens.filter((item) => {
-    const termo = busca.toLowerCase();
+    const termo = busca.toLowerCase().trim();
+    if (!termo) return true;
     return (
       item.isbn.toLowerCase().includes(termo) ||
       item.titulo.toLowerCase().includes(termo)
     );
   });
+
+  // === VERIFICA ISBN EXATO ===
+  const isIsbnExatoMatch = (busca: string, isbn: string): boolean => {
+    return busca.trim() === isbn;
+  };
 
   return (
     <div className="space-y-6">
@@ -300,21 +304,31 @@ export default function Estoque() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {itensFiltrados.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => abrirModal(item)}
-                    >
-                      <TableCell className="font-mono text-xs">{item.isbn}</TableCell>
-                      <TableCell className="max-w-xs truncate">{item.titulo}</TableCell>
-                      <TableCell>{item.gaveta}</TableCell>
-                      <TableCell className="text-center font-bold">{item.quantidade}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {format(new Date(item.ultima_atualizacao), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {itensFiltrados.map((item) => {
+                    const isHighlighted = isIsbnExatoMatch(busca, item.isbn);
+
+                    return (
+                      <TableRow
+                        key={item.id}
+                        className={`
+                          cursor-pointer transition-colors
+                          ${isHighlighted
+                            ? 'bg-green-50 hover:bg-green-100 border-l-4 border-green-500'
+                            : 'hover:bg-muted/50'
+                          }
+                        `}
+                        onClick={() => abrirModal(item)}
+                      >
+                        <TableCell className="font-mono text-xs">{item.isbn}</TableCell>
+                        <TableCell className="max-w-xs truncate">{item.titulo}</TableCell>
+                        <TableCell>{item.gaveta}</TableCell>
+                        <TableCell className="text-center font-bold">{item.quantidade}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {format(new Date(item.ultima_atualizacao), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -398,7 +412,7 @@ export default function Estoque() {
                   <Button
                     onClick={handleRetirar}
                     variant="destructive"
-                    disabled={parseInt(quantidadeRetirar) > livroSelecionado.quantidade}
+                    disabled={!quantidadeRetirar || parseInt(quantidadeRetirar) > livroSelecionado.quantidade}
                   >
                     Retirar
                   </Button>

@@ -12,13 +12,18 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <SidebarComponent open={sidebarOpen} setOpen={setSidebarOpen} />
 
-      {/* Main Content */}
+      {/* Main Content - se adapta ao tamanho do sidebar */}
       <motion.main
-        className="flex-1 transition-all duration-300 overflow-x-hidden"
+        className="flex-1 transition-all duration-300 ease-in-out overflow-x-hidden"
         animate={{
-          marginLeft: sidebarOpen ? 260 : 60, // 260px = sidebar aberto, 60px = ícone
+          marginLeft: sidebarOpen ? 256 : 64, // 256px = aberto, 64px = ícones
         }}
-        initial={{ marginLeft: 60 }}
+        initial={{ marginLeft: 64 }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 300, 
+          damping: 30 
+        }}
       >
         <div className="p-4 sm:p-6 lg:p-8">
           <Outlet />

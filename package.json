@@ -52,6 +52,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "currency-formatter": "^1.5.9",
     "date-fns": "^3.6.0",
     "docx": "^9.5.1",
     "dompurify": "^3.3.0",

@@ -9,7 +9,7 @@ export function UiverseLoader() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="loader w-32 h-32"
-        aria-label="Carregando..."
+        aria-label=""
       >
         {/* Todos os paths (mesmos do original) */}
         <path pathLength="360" d="M 56.3752 2 H 7.6248 C 7.2797 2 6.9999 2.268 6.9999 2.5985 V 61.4015 C 6.9999 61.7321 7.2797 62 7.6248 62 H 56.3752 C 56.7203 62 57.0001 61.7321 57.0001 61.4015 V 2.5985 C 57.0001 2.268 56.7203 2 56.3752 2 Z" />

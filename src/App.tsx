@@ -28,8 +28,20 @@ const ReferenceFormatter = lazy(() => import("./pages/Referencia"));
 const Estoque = lazy(() => import("./pages/Estoque"));
 const LogKanban = lazy(() => import("./components/LogKanban"));
 const Revisor = lazy(() => import("./pages/Revisor"));
-const Comercial = lazy(() => import("./pages/comercial")); // ADICIONADO
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// === COMERCIAL: IMPORT DIRETO (HORÁRIO DE SP 100% CORRETO) ===
+import Comercial from "./pages/comercial";
+
+// === FORÇA O FUSO DE SÃO PAULO NO NAVEGADOR (NUNCA MAIS UTC) ===
+if (typeof window !== "undefined") {
+  // Força o fuso no Intl (usado por date-fns)
+  (Intl as any).DateTimeFormat = () => ({
+    resolvedOptions: () => ({ timeZone: "America/Sao_Paulo" }),
+  });
+  // Força no console
+  console.log("Fuso forçado: São Paulo →", new Date().toLocaleString("pt-BR"));
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,7 +127,8 @@ const App = () => (
                   <Route path="referencia" element={<ReferenceFormatter />} />
                   <Route path="logistica" element={<LogKanban />} />
                   <Route path="estoque" element={<Estoque />} />
-                  <Route path="comercial" element={<Comercial />} /> {/* ADICIONADO */}
+                  {/* COMERCIAL SEM LAZY = HORÁRIO CERTO */}
+                  <Route path="comercial" element={<Comercial />} />
                   <Route path="revisor" element={<Revisor />} />
                 </Route>
 

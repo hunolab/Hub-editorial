@@ -3,7 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useEffect, useState, Suspense, lazy } from "react";
 import { UiverseLoader } from "@/components/UiverseLoader";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -17,6 +23,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 
 // === COMPONENTES ===
 import Navigation from "./components/Navigation";
+import Footer from "./components/Footer"; // Footer externo (src/components/Footer.tsx)
 
 // === PÁGINAS (LAZY LOADING) ===
 const Home = lazy(() => import("./pages/Home"));
@@ -35,12 +42,13 @@ import Comercial from "./pages/comercial";
 
 // === FORÇA O FUSO DE SÃO PAULO NO NAVEGADOR (NUNCA MAIS UTC) ===
 if (typeof window !== "undefined") {
-  // Força o fuso no Intl (usado por date-fns)
   (Intl as any).DateTimeFormat = () => ({
     resolvedOptions: () => ({ timeZone: "America/Sao_Paulo" }),
   });
-  // Força no console
-  console.log("Fuso forçado: São Paulo →", new Date().toLocaleString("pt-BR"));
+  console.log(
+    "Fuso forçado: São Paulo →",
+    new Date().toLocaleString("pt-BR")
+  );
 }
 
 const queryClient = new QueryClient({
@@ -62,7 +70,10 @@ const TransitionWrapper = ({ children }: { children: React.ReactNode }) => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const link = target.closest("a");
-      if (link?.getAttribute("href") === "/dashboard" && location.pathname === "/") {
+      if (
+        link?.getAttribute("href") === "/dashboard" &&
+        location.pathname === "/"
+      ) {
         e.preventDefault();
         setShowLoader(true);
         setTimeout(() => {
@@ -93,48 +104,96 @@ const App = () => (
           fallback={
             <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-background">
               <div className="bg-destructive/10 text-destructive p-4 rounded-full mb-4">
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-12 h-12"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
               <h2 className="text-2xl font-bold mb-2">Erro inesperado</h2>
-              <p className="text-muted-foreground mb-4">Tente recarregar a página ou volte mais tarde.</p>
-              <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition">
+              <p className="text-muted-foreground mb-4">
+                Tente recarregar a página ou volte mais tarde.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
+              >
                 Recarregar
               </button>
             </div>
           }
         >
           <TransitionWrapper>
-            <Suspense fallback={
-              <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="flex items-center gap-3">
-                  <UiverseLoader />
-                  <span className="text-lg font-medium">Carregando...</span>
+            <Suspense
+              fallback={
+                <div className="min-h-screen flex items-center justify-center bg-background">
+                  <div className="flex items-center gap-3">
+                    <UiverseLoader />
+                    <span className="text-lg font-medium">Carregando...</span>
+                  </div>
                 </div>
+              }
+            >
+              <div className="flex flex-col min-h-screen">
+                <Routes>
+                  {/* ROTAS PÚBLICAS */}
+                  <Route
+                    path="/"
+                    element={
+                      <Layout>
+                        <Navigation />
+                        <Home />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/login"
+                    element={
+                      <Layout>
+                        <Navigation />
+                        <Login />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/submit"
+                    element={
+                      <Layout>
+                        <Navigation />
+                        <SubmitChapter />
+                      </Layout>
+                    }
+                  />
+
+                  {/* DASHBOARD PROTEGIDO */}
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route
+                      path="calculadora"
+                      element={<CalculadoraEditorial />}
+                    />
+                    <Route path="referencia" element={<ReferenceFormatter />} />
+                    <Route path="logistica" element={<LogKanban />} />
+                    <Route path="estoque" element={<Estoque />} />
+                    <Route path="comercial" element={<Comercial />} />
+                    <Route path="revisor" element={<Revisor />} />
+                  </Route>
+
+                  {/* 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+
+                {/* FOOTER GLOBAL */}
+                <Footer />
               </div>
-            }>
-              <Routes>
-                {/* ROTAS PÚBLICAS */}
-                <Route path="/" element={<Layout><Navigation /><Home /></Layout>} />
-                <Route path="/login" element={<Layout><Navigation /><Login /></Layout>} />
-                <Route path="/submit" element={<Layout><Navigation /><SubmitChapter /></Layout>} />
-
-                {/* DASHBOARD PROTEGIDO */}
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="calculadora" element={<CalculadoraEditorial />} />
-                  <Route path="referencia" element={<ReferenceFormatter />} />
-                  <Route path="logistica" element={<LogKanban />} />
-                  <Route path="estoque" element={<Estoque />} />
-                  {/* COMERCIAL SEM LAZY = HORÁRIO CERTO */}
-                  <Route path="comercial" element={<Comercial />} />
-                  <Route path="revisor" element={<Revisor />} />
-                </Route>
-
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
 
               <SpeedInsights />
             </Suspense>

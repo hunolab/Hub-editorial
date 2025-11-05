@@ -1,7 +1,7 @@
 // src/pages/comercial.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, subDays, subWeeks, subMonths, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +25,7 @@ import { format as formatCurrency } from 'currency-formatter';
 // === RECHARTS ===
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend, ReferenceLine
 } from 'recharts';
 
 const supabase = createClient(
@@ -71,12 +71,14 @@ const formatarDataSP = (isoString: string, pattern = 'dd/MM HH:mm') => {
 
 // === ESTILOS ===
 const adesivos = ['/adesivos/1.png', '/adesivos/2.png', '/adesivos/3.png', '/adesivos/4.png'];
-const COLORS = { primary: '#ffb319', solo: '#10b981', coaut: '#3b82f6' };
+const COLORS = { primary: '#ffb319', solo: '#10b981', coaut: '#3b82f6', prev: '#888888' };
 
 export default function Comercial() {
   const [vendedoras, setVendedoras] = useState<Vendedora[]>([]);
   const [vendasAgregadas, setVendasAgregadas] = useState<AggregatedSales[]>([]);
+  const [vendasAgregadasPrev, setVendasAgregadasPrev] = useState<AggregatedSales[]>([]);
   const [todasVendas, setTodasVendas] = useState<Venda[]>([]);
+  const [todasVendasPrev, setTodasVendasPrev] = useState<Venda[]>([]);
   const [historico, setHistorico] = useState<Venda[]>([]);
   const [periodo, setPeriodo] = useState<'diario' | 'semanal' | 'mensal' | 'custom'>('mensal');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -102,58 +104,68 @@ export default function Comercial() {
   });
 
   // === INTERVALO DE DATAS (em SP) ===
-  // === INTERVALO DE DATAS (em SP) ===
-const { startDate, endDate } = useMemo(() => {
-  const now = new Date();
+  const { startDate, endDate, prevStart, prevEnd } = useMemo(() => {
+    const now = new Date();
 
-  // 🔸 Intervalo personalizado
-  if (periodo === "custom" && dateRange?.from && dateRange?.to) {
-    const start = startOfDay(dateRange.from);
-    const end = endOfDay(dateRange.to);
+    // 🔸 Intervalo personalizado
+    let currStart = startOfDay(now);
+    let currEnd = endOfDay(now);
+    if (periodo === "custom" && dateRange?.from && dateRange?.to) {
+      currStart = startOfDay(dateRange.from);
+      currEnd = endOfDay(dateRange.to);
+    } else {
+      switch (periodo) {
+        case "diario":
+          break;
+        case "semanal":
+          currStart = startOfWeek(now, { locale: ptBR });
+          currEnd = endOfWeek(now, { locale: ptBR });
+          break;
+        case "mensal":
+          currStart = startOfMonth(now);
+          currEnd = endOfMonth(now);
+          break;
+      }
+    }
 
-    return {
-      startDate: new Date(
-        start.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-      ),
-      endDate: new Date(
-        end.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-      ),
-    };
-  }
+    const startSP = new Date(currStart.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const endSP = new Date(currEnd.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
 
-  // 🔹 Períodos pré-definidos
-  let start = startOfDay(now);
-  let end = endOfDay(now);
+    // 🔸 Período anterior
+    let pStart = currStart;
+    let pEnd = currEnd;
+    switch (periodo) {
+      case 'diario':
+        pStart = subDays(currStart, 1);
+        pEnd = subDays(currEnd, 1);
+        break;
+      case 'semanal':
+        pStart = subWeeks(currStart, 1);
+        pEnd = subWeeks(currEnd, 1);
+        break;
+      case 'mensal':
+        pStart = subMonths(currStart, 1);
+        pEnd = subMonths(currEnd, 1);
+        break;
+      case 'custom':
+        if (dateRange?.from && dateRange.to) {
+          const diff = differenceInDays(currEnd, currStart) + 1;
+          pStart = subDays(currStart, diff);
+          pEnd = subDays(currEnd, diff);
+        }
+        break;
+    }
 
-  switch (periodo) {
-    case "diario":
-      break;
-    case "semanal":
-      start = startOfWeek(now, { locale: ptBR });
-      end = endOfWeek(now, { locale: ptBR });
-      break;
-    case "mensal":
-      start = startOfMonth(now);
-      end = endOfMonth(now);
-      break;
-  }
+    const prevStartSP = new Date(pStart.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const prevEndSP = new Date(pEnd.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
 
-  return {
-    startDate: new Date(
-      start.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-    ),
-    endDate: new Date(
-      end.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-    ),
-  };
-}, [periodo, dateRange?.from, dateRange?.to]);
+    return { startDate: startSP, endDate: endSP, prevStart: prevStartSP, prevEnd: prevEndSP };
+  }, [periodo, dateRange]);
 
-// 🧭 Resetar range ao mudar de período
-useEffect(() => {
-  if (periodo !== "custom") setDateRange(undefined);
-}, [periodo]);
-
-
+  // 🧭 Resetar range ao mudar de período
+  useEffect(() => {
+    if (periodo !== "custom") setDateRange(undefined);
+  }, [periodo]);
 
   // === BUSCAR VENDEDORES ===
   useEffect(() => {
@@ -174,6 +186,17 @@ useEffect(() => {
       .order('data_venda', { ascending: false });
     if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     else setTodasVendas(data || []);
+  };
+
+  const fetchTodasVendasPrev = async () => {
+    const { data, error } = await supabase
+      .from('vendas')
+      .select('*')
+      .gte('data_venda', prevStart.toISOString())
+      .lte('data_venda', prevEnd.toISOString())
+      .order('data_venda', { ascending: false });
+    if (error) toast({ title: 'Erro anterior', description: error.message, variant: 'destructive' });
+    else setTodasVendasPrev(data || []);
   };
 
   // === AGREGAR VENDAS ===
@@ -203,12 +226,40 @@ useEffect(() => {
     setVendasAgregadas(agregados);
   };
 
+  const fetchVendasAgregadasPrev = async () => {
+    const { data, error } = await supabase
+      .from('vendas')
+      .select('vendedora_id, tipo_venda, valor')
+      .gte('data_venda', prevStart.toISOString())
+      .lte('data_venda', prevEnd.toISOString());
+
+    if (error) { toast({ title: 'Erro anterior', description: error.message, variant: 'destructive' }); return; }
+
+    const agregados = vendedoras.map(v => {
+      const vendas = data?.filter(x => x.vendedora_id === v.id) || [];
+      const solos = vendas.filter(x => x.tipo_venda === 'solo');
+      const coauts = vendas.filter(x => x.tipo_venda === 'coautoria');
+      return {
+        vendedora_id: v.id,
+        total_vendas: vendas.length,
+        total_valor: vendas.reduce((s, x) => s + x.valor, 0),
+        solos: solos.length,
+        coautorias: coauts.length,
+        valor_sol: solos.reduce((s, x) => s + x.valor, 0),
+        valor_coaut: coauts.reduce((s, x) => s + x.valor, 0),
+      };
+    });
+    setVendasAgregadasPrev(agregados);
+  };
+
   useEffect(() => {
     if (vendedoras.length) {
       fetchVendasAgregadas();
+      fetchVendasAgregadasPrev();
       fetchTodasVendas();
+      fetchTodasVendasPrev();
     }
-  }, [vendedoras, startDate, endDate]);
+  }, [vendedoras, startDate, endDate, prevStart, prevEnd]);
 
   // === MODAL DETALHES ===
   const abrirModal = async (v: Vendedora) => {
@@ -283,6 +334,8 @@ useEffect(() => {
       setShowAddVenda(false);
       fetchVendasAgregadas();
       fetchTodasVendas();
+      fetchVendasAgregadasPrev();
+      fetchTodasVendasPrev();
     }
   };
 
@@ -295,6 +348,15 @@ useEffect(() => {
     valor_sol: a.valor_sol + v.valor_sol,
     valor_coaut: a.valor_coaut + v.valor_coaut,
   }), { total: 0, total_valor: 0, solos: 0, coautorias: 0, valor_sol: 0, valor_coaut: 0 }), [vendasAgregadas]);
+
+  const totaisPrev = useMemo(() => vendasAgregadasPrev.reduce((a, v) => ({
+    total: a.total + v.total_vendas,
+    total_valor: a.total_valor + v.total_valor,
+    solos: a.solos + v.solos,
+    coautorias: a.coautorias + v.coautorias,
+    valor_sol: a.valor_sol + v.valor_sol,
+    valor_coaut: a.valor_coaut + v.valor_coaut,
+  }), { total: 0, total_valor: 0, solos: 0, coautorias: 0, valor_sol: 0, valor_coaut: 0 }), [vendasAgregadasPrev]);
 
   // === PROGRESSO ===
   const progresso = (v: Vendedora) => {
@@ -313,6 +375,13 @@ useEffect(() => {
     const [vendedoraId, setVendedoraId] = useState('todas');
     const [modo, setModo] = useState<'quantidade' | 'valor'>('valor');
 
+    const formatTick = (value: number) => {
+      if (modo !== 'valor') return value;
+      if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}K`;
+      return `R$ ${value.toFixed(0)}`;
+    };
+
     const porDia = useMemo(() => {
       const dias = eachDayOfInterval({ start: startDate, end: endDate });
       return dias.map(d => {
@@ -329,6 +398,22 @@ useEffect(() => {
       });
     }, [todasVendas, startDate, endDate]);
 
+    const porDiaPrev = useMemo(() => {
+      const dias = eachDayOfInterval({ start: prevStart, end: prevEnd });
+      return dias.map(d => {
+        const key = format(d, 'dd/MM', { locale: ptBR });
+        const vendasDia = todasVendasPrev.filter(v => {
+          const dataVendaSP = formatarDataSP(v.data_venda, 'dd/MM');
+          return dataVendaSP === key;
+        });
+        return {
+          label: key,
+          valor: vendasDia.reduce((s, v) => s + v.valor, 0),
+          qtd: vendasDia.length
+        };
+      });
+    }, [todasVendasPrev, prevStart, prevEnd]);
+
     const pie = useMemo(() => {
       const agg = vendedoraId === 'todas' ? totais : vendasAgregadas.find(v => v.vendedora_id === vendedoraId);
       if (!agg) return [];
@@ -338,12 +423,31 @@ useEffect(() => {
       ];
     }, [vendedoraId, modo, totais, vendasAgregadas]);
 
-    const bar = vendedoras.map(v => {
+    const piePrev = useMemo(() => {
+      const agg = vendedoraId === 'todas' ? totaisPrev : vendasAgregadasPrev.find(v => v.vendedora_id === vendedoraId);
+      if (!agg) return [];
+      return [
+        { name: 'Solo', value: modo === 'valor' ? agg.valor_sol : agg.solos, fill: COLORS.solo },
+        { name: 'Coautoria', value: modo === 'valor' ? agg.valor_coaut : agg.coautorias, fill: COLORS.coaut },
+      ];
+    }, [vendedoraId, modo, totaisPrev, vendasAgregadasPrev]);
+
+    const barData = vendedoras.map(v => {
       const a = vendasAgregadas.find(x => x.vendedora_id === v.id) || { total_vendas: 0, total_valor: 0 };
-      return { nome: v.nome.split(' ')[0], valor: modo === 'valor' ? a.total_valor : a.total_vendas };
-    }).sort((a, b) => b.valor - a.valor);
+      const aPrev = vendasAgregadasPrev.find(x => x.vendedora_id === v.id) || { total_vendas: 0, total_valor: 0 };
+      return {
+        nome: v.nome.split(' ')[0],
+        atual: modo === 'valor' ? a.total_valor : a.total_vendas,
+        anterior: modo === 'valor' ? aPrev.total_valor : aPrev.total_vendas
+      };
+    }).sort((a, b) => b.atual - a.atual);
 
     const area = porDia.reduce((acc, cur, i) => {
+      acc.push({ label: cur.label, acumulado: (acc[i - 1]?.acumulado || 0) + (modo === 'valor' ? cur.valor : cur.qtd) });
+      return acc;
+    }, [] as { label: string; acumulado: number }[]);
+
+    const areaPrev = porDiaPrev.reduce((acc, cur, i) => {
       acc.push({ label: cur.label, acumulado: (acc[i - 1]?.acumulado || 0) + (modo === 'valor' ? cur.valor : cur.qtd) });
       return acc;
     }, [] as { label: string; acumulado: number }[]);
@@ -354,7 +458,7 @@ useEffect(() => {
         <div className="bg-white p-3 rounded shadow border">
           <p className="font-bold">{label}</p>
           {payload.map((p: any) => (
-            <p key={p.name} style={{ color: p.color }}>
+            <p key={p.name} style={{ color: p.fill }}>
               {p.name}: {modo === 'valor' ? formatCurrency(p.value, { code: 'BRL' }) : p.value}
             </p>
           ))}
@@ -388,24 +492,42 @@ useEffect(() => {
         </div>
 
         <TabsContent value="geral" className="space-y-8">
-          <Card>
-            <CardHeader><CardTitle>Evolução Diária</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={porDia}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
-                  <YAxis />
-                  <Tooltip content={<TooltipCustom />} />
-                  <Line type="monotone" dataKey={modo === 'valor' ? 'valor' : 'qtd'} stroke={COLORS.primary} strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader><CardTitle>Evolução Diária - Atual</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={porDia}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Line type="monotone" dataKey={modo === 'valor' ? 'valor' : 'qtd'} stroke={COLORS.primary} strokeWidth={3} name="Atual" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Evolução Diária - Anterior</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={porDiaPrev}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Line type="monotone" dataKey={modo === 'valor' ? 'valor' : 'qtd'} stroke={COLORS.prev} strokeWidth={3} name="Anterior" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
-              <CardHeader><CardTitle>Solo × Coautoria</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Solo × Coautoria - Atual</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -413,61 +535,183 @@ useEffect(() => {
                       {pie.map((e, i) => <Cell key={i} fill={e.fill} />)}
                     </Pie>
                     <Tooltip formatter={v => modo === 'valor' ? formatCurrency(v as number, { code: 'BRL' }) : v} />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
             <Card>
-              <CardHeader><CardTitle>Acumulado</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Solo × Coautoria - Anterior</CardTitle></CardHeader>
               <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={area}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
-                  <YAxis />
-                  <Tooltip content={<TooltipCustom />} />
-                  <Area type="monotone" dataKey="acumulado" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} />
-                </AreaChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={piePrev} dataKey="value" cx="50%" cy="50%" innerRadius={60} outerRadius={100} label>
+                      {piePrev.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Pie>
+                    <Tooltip formatter={v => modo === 'valor' ? formatCurrency(v as number, { code: 'BRL' }) : v} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader><CardTitle>Acumulado - Atual</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={area}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Area type="monotone" dataKey="acumulado" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} name="Atual" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Acumulado - Anterior</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={areaPrev}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Area type="monotone" dataKey="acumulado" stroke={COLORS.prev} fill={COLORS.prev} fillOpacity={0.6} name="Anterior" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="vendedora">
-          {vendedoraId !== 'todas' && (
+        <TabsContent value="vendedora" className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
-              <CardHeader><CardTitle>Evolução – {vendedoras.find(v => v.id === vendedoraId)?.nome}</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Evolução – {vendedoras.find(v => v.id === vendedoraId)?.nome || 'Todas'} - Atual</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={340}>
-                  <LineChart data={porDia.map(d => {
-                    const vendas = todasVendas.filter(v => v.vendedora_id === vendedoraId && formatarDataSP(v.data_venda, 'dd/MM') === d.label);
-                    return { label: d.label, valor: vendas.reduce((s, x) => s + x.valor, 0), qtd: vendas.length };
-                  })}>
+                  <LineChart
+                    data={porDia.map(d => {
+                      const vendas = todasVendas.filter(v => (vendedoraId === 'todas' || v.vendedora_id === vendedoraId) && formatarDataSP(v.data_venda, 'dd/MM') === d.label);
+                      return { label: d.label, valor: vendas.reduce((s, x) => s + x.valor, 0), qtd: vendas.length };
+                    })}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
-                    <YAxis />
+                    <YAxis tickFormatter={formatTick} />
                     <Tooltip content={<TooltipCustom />} />
-                    <Line type="monotone" dataKey={modo === 'valor' ? 'valor' : 'qtd'} stroke={COLORS.primary} strokeWidth={3} />
+                    <Legend />
+                    <Line type="monotone" dataKey={modo === 'valor' ? 'valor' : 'qtd'} stroke={COLORS.primary} strokeWidth={3} name="Atual" />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-          )}
+            <Card>
+              <CardHeader><CardTitle>Evolução – {vendedoras.find(v => v.id === vendedoraId)?.nome || 'Todas'} - Anterior</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={340}>
+                  <LineChart
+                    data={porDiaPrev.map(d => {
+                      const vendas = todasVendasPrev.filter(v => (vendedoraId === 'todas' || v.vendedora_id === vendedoraId) && formatarDataSP(v.data_venda, 'dd/MM') === d.label);
+                      return { label: d.label, valor: vendas.reduce((s, x) => s + x.valor, 0), qtd: vendas.length };
+                    })}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Line type="monotone" dataKey={modo === 'valor' ? 'valor' : 'qtd'} stroke={COLORS.prev} strokeWidth={3} name="Anterior" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader><CardTitle>Solo × Coautoria - Atual</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={pie} dataKey="value" cx="50%" cy="50%" innerRadius={60} outerRadius={100} label>
+                      {pie.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Pie>
+                    <Tooltip formatter={v => modo === 'valor' ? formatCurrency(v as number, { code: 'BRL' }) : v} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Solo × Coautoria - Anterior</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={piePrev} dataKey="value" cx="50%" cy="50%" innerRadius={60} outerRadius={100} label>
+                      {piePrev.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                    </Pie>
+                    <Tooltip formatter={v => modo === 'valor' ? formatCurrency(v as number, { code: 'BRL' }) : v} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader><CardTitle>Acumulado - Atual</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={area}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Area type="monotone" dataKey="acumulado" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} name="Atual" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Acumulado - Anterior</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={areaPrev}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" angle={-45} textAnchor="end" height={70} />
+                    <YAxis tickFormatter={formatTick} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Legend />
+                    <Area type="monotone" dataKey="acumulado" stroke={COLORS.prev} fill={COLORS.prev} fillOpacity={0.6} name="Anterior" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="comparativo">
           <Card>
-            <CardHeader><CardTitle>Ranking</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Ranking - Atual vs Anterior</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={Math.max(300, vendedoras.length * 60)}>
-                <BarChart data={bar} layout="horizontal">
+                <BarChart data={barData} layout="horizontal">
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
+                  <XAxis type="number" tickFormatter={formatTick} />
                   <YAxis dataKey="nome" type="category" width={110} />
                   <Tooltip formatter={v => modo === 'valor' ? formatCurrency(v as number, { code: 'BRL' }) : v} />
-                  <Bar dataKey="valor" fill={COLORS.primary} radius={8} />
+                  <Legend />
+                  <Bar dataKey="atual" fill={COLORS.primary} radius={8} name="Atual" />
+                  <Bar dataKey="anterior" fill={COLORS.prev} radius={8} name="Anterior" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

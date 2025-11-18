@@ -1,336 +1,277 @@
+// src/pages/Home.tsx
 import { useEffect, useRef } from 'react';
-import { BookOpen, PenTool, Users, Award, Sparkles } from 'lucide-react';
+import { BookOpen, PenTool, Users, Award, Sparkles, Star, Send, Mail, Phone, MapPin, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { cn } from "@/lib/utils";
-import { Marquee } from "@/components/ui/magicui/marquee";
-import { TextReveal } from "@/components/ui/magicui/text-reveal";
+import { ScrollTrigger, ScrollSmoother } from 'gsap/all';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
 const reviews = [
-  {
-    name: "Luiza",
-    username: "@luizamlucena",
-    body: "Amo publicar com a Literare",
-    img: "https://i.ibb.co/21RnGpmg/2.png",
-  },
-  {
-    name: "Thiago Castro",
-    username: "@dr.thiagocastro",
-    body: "Maior editora em autismo!",
-    img: "https://i.ibb.co/9kQFrJsv/1.png",
-  },
-  {
-    name: "Hiram",
-    username: "@hirambaroli",
-    body: "Revisão de primeira!",
-    img: "https://i.ibb.co/MkZyYCDw/3.png",
-  },
-  {
-    name: "Lucedile",
-    username: "@lucedileantunes",
-    body: "Literare publica livros inspiradores.",
-    img: "https://i.ibb.co/JWxybGm8/4.png",
-  },
-  {
-    name: "Chris Pelajo",
-    username: "@chrispelajooficial",
-    body: "Editora com visão inovadora.",
-    img: "https://i.ibb.co/bVthjK4/Chrispelajo.png",
-  },
+  { name: "Luiza", username: "@luizamlucena", body: "Amo publicar com a Literare", rating: 5 },
+  { name: "Thiago Castro", username: "@dr.thiagocastro", body: "Maior editora em autismo!", rating: 5 },
+  { name: "Hiram", username: "@hirambaroli", body: "Revisão de primeira!", rating: 5 },
+  { name: "Lucedile", username: "@lucedileantunes", body: "Literare publica livros inspiradores.", rating: 5 },
+  { name: "Chris Pelajo", username: "@chrispelajooficial", body: "Editora com visão inovadora.", rating: 5 },
 ];
 
-const firstRow = reviews.slice(0, reviews.length / 2);
-const secondRow = reviews.slice(reviews.length / 2);
-const thirdRow = reviews.slice(0, reviews.length / 2);
-const fourthRow = reviews.slice(reviews.length / 2);
-
-const ReviewCard = ({
-  img,
-  name,
-  username,
-  body,
-}: {
-  img: string;
-  name: string;
-  username: string;
-  body: string;
-}) => {
-  return (
-    <figure
-      className={cn(
-        "relative w-fit sm:w-36 cursor-pointer rounded-xl border p-4",
-        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
-        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
-        "flex flex-col"
-      )}
-    >
-      <div className="flex flex-row items-center gap-2 mb-2">
-        <img className="rounded-full" width="32" height="32" alt="" src={img} />
-        <div className="flex flex-col">
-          <figcaption className="text-sm font-medium dark:text-white">
-            {name}
-          </figcaption>
-          <p className="text-xs font-sm dark:text-white/40">{username}</p>
-        </div>
-      </div>
-      <blockquote className="text-sm">
-        {body}
-      </blockquote>
-    </figure>
-  );
-};
-
-const Marquee3D = () => {
-  return (
-    <div className="relative flex h-96 w-full flex-row items-center justify-center gap-4 overflow-hidden [perspective:300px]">
-      <div
-        className="flex flex-row items-center gap-4 hero-marquee"
-        style={{
-          transform:
-            "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
-        }}
-      >
-        <Marquee pauseOnHover vertical className="[--duration:30s]">
-          {firstRow.map((review) => (
-            <ReviewCard key={review.username} {...review} />
-          ))}
-        </Marquee>
-        <Marquee reverse pauseOnHover className="[--duration:30s]" vertical>
-          {secondRow.map((review) => (
-            <ReviewCard key={review.username} {...review} />
-          ))}
-        </Marquee>
-        <Marquee reverse pauseOnHover className="[--duration:30s]" vertical>
-          {thirdRow.map((review) => (
-            <ReviewCard key={review.username} {...review} />
-          ))}
-        </Marquee>
-        <Marquee pauseOnHover className="[--duration:30s]" vertical>
-          {fourthRow.map((review) => (
-            <ReviewCard key={review.username} {...review} />
-          ))}
-        </Marquee>
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-background"></div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background"></div>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background"></div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background"></div>
-    </div>
-  );
-};
-
-const transitionVariants = {
-  item: {
-    hidden: { opacity: 0, filter: 'blur(12px)', y: 12 },
-    visible: { opacity: 1, filter: 'blur(0px)', y: 0, transition: { type: 'spring', bounce: 0.3, duration: 1.5 } },
-  },
-};
-
-const AnimatedGroup = ({ children, variants, className }: any) => {
-  return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
-      variants={variants}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
 export default function Home() {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
 
+  // Cursor magnético suave
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo('.hero-title', 
-        { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }
-      );
-      
-      gsap.fromTo('.hero-subtitle', 
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 1, delay: 0.2, ease: 'power3.out' }
-      );
-
-      gsap.fromTo('.hero-marquee', 
-        { opacity: 0, scale: 0.8 },
-        { opacity: 1, scale: 1, duration: 1.2, delay: 0.4, ease: 'power3.out' }
-      );
-
-      gsap.to('.hero-marquee', {
-        y: -10,
-        duration: 3,
-        repeat: -1,
-        yoyo: true,
-        ease: 'power2.inOut'
-      });
-
-      gsap.fromTo('.feature-card', 
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.2,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: featuresRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse'
-          }
-        }
-      );
-
-      gsap.fromTo('.cta-content', 
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: ctaRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse'
-          }
-        }
-      );
-    }, heroRef);
-
-    return () => ctx.revert();
+    const moveCursor = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        gsap.to(cursorRef.current, {
+          x: e.clientX - 24,
+          y: e.clientY - 24,
+          duration: 0.9,
+          ease: "power3.out",
+        });
+      }
+    };
+    window.addEventListener("mousemove", moveCursor);
+    return () => window.removeEventListener("mousemove", moveCursor);
   }, []);
 
-  const features = [
-    {
-      icon: PenTool,
-      title: 'Submissão Simplificada',
-      description: 'Envie seus capítulos através de um processo guiado e intuitivo, com validação em tempo real.'
-    },
-    {
-      icon: Users,
-      title: 'Colaboração Editorial',
-      description: 'Trabalhe conosco em parceria, com feedback profissional e acompanhamento personalizado.'
-    },
-    {
-      icon: Award,
-      title: 'Qualidade Literária',
-      description: 'Mantemos os mais altos padrões de qualidade editorial e curadoria de conteúdo.'
-    },
-    {
-      icon: BookOpen,
-      title: 'Publicação Profissional',
-      description: 'Transformamos seu manuscrito em uma obra publicada com toda a infraestrutura necessária.'
-    }
-  ];
+  // ScrollSmoother + orbes flutuantes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    ScrollSmoother.create({
+      wrapper: '#smooth-wrapper',
+      content: '#smooth-content',
+      smooth: 2,
+      effects: true,
+      smoothTouch: 0.1,
+    });
+
+    gsap.to(".floating-orb", {
+      y: -140,
+      x: 100,
+      rotation: 360,
+      duration: 28,
+      repeat: -1,
+      yoyo: true,
+      ease: "none",
+      stagger: { each: 4, from: "random" },
+    });
+  }, []);
 
   return (
-    <div ref={heroRef} className="min-h-screen">
-      {/* Fundo decorativo do Hero */}
+    <>
+      {/* Cursor dourado */}
       <div
-        aria-hidden
-        className="z-[2] absolute inset-0 pointer-events-none isolate opacity-50 contain-strict hidden lg:block"
-      >
-        <div className="w-[35rem] h-[80rem] -translate-y-[350px] absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(0,0%,85%,.08)_0,hsla(0,0%,55%,.02)_50%,hsla(0,0%,45%,0)_80%)]" />
-        <div className="h-[80rem] absolute left-0 top-0 w-56 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] [translate:5%_-50%]" />
-        <div className="h-[80rem] -translate-y-[350px] absolute left-0 top-0 w-56 -rotate-45 bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.04)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)]" />
-      </div>
+        ref={cursorRef}
+        className="fixed w-12 h-12 bg-[#ffb319]/10 rounded-full pointer-events-none z-50 backdrop-blur-xl border border-[#ffb319]/40 hidden lg:block mix-blend-plus-lighter"
+      />
 
-      {/* Seção Hero */}
-      <section>
-        <div className="relative pt-24 md:pt-36">
-          <div aria-hidden className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--background)_75%)]" />
-          <div className="mx-auto max-w-7xl px-6">
-            <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
-              <AnimatedGroup variants={transitionVariants}>
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary-soft text-primary text-sm font-medium mb-4">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Seja Autor(a)
-                </span>
-                <h1 className="heading-hero text-foreground">
-                  Editorial
-                  <span className="text-primary block">
-                    Literare Books
+      <div id="smooth-wrapper" className="bg-white text-black">
+        <div id="smooth-content" className="font-outfit">
+
+          {/* HERO */}
+          <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+            {/* Orbes dourados flutuantes */}
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="floating-orb absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-20"
+                style={{
+                  background: "radial-gradient(circle at 40%, #ffb319, transparent 70%)",
+                  top: `${10 + i * 15}%`,
+                  left: i % 2 === 0 ? `${-20 + i * 20}%` : `${60 + i * 10}%`,
+                }}
+              />
+            ))}
+
+            <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 60 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2 }}
+              >
+                <div className="mb-10">
+                  <span className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#ffb319]/10 text-[#ffb319] font-bold text-lg tracking-wider">
+                    <Sparkles className="w-6 h-6" />
+                    A editora que publica autores de verdade
                   </span>
+                </div>
+
+                <h1 className="text-8xl md:text-9xl font-black tracking-tighter mb-8 leading-none">
+                  <span className="block text-black">Literare</span>
+                  <span className="block text-[#ffb319]">Books</span>
                 </h1>
-                
-                <p className="hero-subtitle body-lg text-muted-foreground max-w-xl mx-auto">
-                  A Literare Books é uma editora moderna dedicada a descobrir e publicar 
-                  novos talentos literários. Junte-se a nós nessa jornada criativa.
+
+                <p className="text-2xl md:text-3xl text-gray-700 max-w-4xl mx-auto leading-relaxed mb-16 font-light">
+                  Publicação profissional • Curadoria exclusiva • Parceria real
                 </p>
-              </AnimatedGroup>
 
-              {/* BOTÕES REMOVIDOS AQUI */}
+                <Button asChild size="lg" className="group text-2xl px-16 py-10 rounded-2xl bg-[#ffb319] hover:bg-[#e5a00e] text-black font-bold shadow-xl hover:shadow-2xl hover:shadow-[#ffb319]/40 transition-all duration-500">
+                  <Link to="/submit" className="flex items-center gap-5">
+                    Começar a Publicar
+                    <Send className="w-8 h-8 group-hover:translate-x-3 transition-transform" />
+                  </Link>
+                </Button>
+              </motion.div>
             </div>
+          </section>
 
-            <div className="hero-marquee flex justify-center lg:justify-end mt-12">
-              <div className="relative">
-                <Marquee3D />
+          {/* FEATURES */}
+          <section className="py-32">
+            <div className="max-w-7xl mx-auto px-6">
+              <motion.div className="text-center mb-24">
+                <h2 className="text-6xl md:text-8xl font-black mb-8">
+                  <span className="text-black">Por que autores escolhem</span><br />
+                  <span className="text-[#ffb319]">a Literare</span>
+                </h2>
+                <p className="text-2xl text-gray-600 font-light max-w-4xl mx-auto">
+                  Não é sobre publicar um livro. É sobre ser lido, lembrado e respeitado.
+                </p>
+              </motion.div>
+
+              <div className="grid lg:grid-cols-2 gap-20 items-center">
+                <div className="space-y-16">
+                  {[
+                    { icon: PenTool, title: "Submissão com Automação", desc: "FFormatação automática de referências bibliográficas com precisão" },
+                    { icon: Users, title: "Editor Dedicado", desc: "Editor experiente revisa e lapida cada capítulo até a excelência" },
+                    { icon: Award, title: "Curadoria Exclusiva", desc: "Revisão rigorosa em etapas para garantir padrão de excelência" },
+                    { icon: BookOpen, title: "Distribuição Nacional", desc: "Seu livro em diversas livrarias físicas e digitais pelo Brasil" },
+                  ].map((f, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -100 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.2 }}
+                      viewport={{ once: true }}
+                      className="group flex gap-8 p-8 rounded-3xl hover:bg-[#ffb319]/5 transition-all duration-500"
+                    >
+                      <div className="w-24 h-24 rounded-3xl bg-[#ffb319] flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                        <f.icon className="w-12 h-12 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-black mb-4">{f.title}</h3>
+                        <p className="text-xl text-gray-700 leading-relaxed">{f.desc}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  className="bg-gradient-to-br from-[#ffb319]/10 to-transparent rounded-3xl p-16 border border-[#ffb319]/20"
+                >
+                  <div className="text-center space-y-12">
+                    <div className="text-9xl font-black text-[#ffb319]">2 Mil+</div>
+                    <p className="text-4xl font-bold">Autores Publicados</p>
+                    <div className="grid grid-cols-3 gap-12 pt-12 border-t border-gray-300">
+                      <div><div className="text-6xl font-black">300+</div><p className="text-xl text-gray-700">Livros</p></div>
+                      <div><div className="text-6xl font-black">N° 1</div><p className="text-x2 text-gray-700">Em Não Ficção</p></div>
+                      <div><div className="text-6xl font-black">20+</div><p className="text-xl text-gray-700">Best-sellers</p></div>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* Seção Features */}
-      <section ref={featuresRef} className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-16">
-            <TextReveal className="my-custom-class">
-              Por que escolher a Literare Books?
-            </TextReveal>
-            <p className="body-lg text-muted-foreground max-w-2xl mx-auto">
-              Oferecemos uma experiência editorial completa, do manuscrito à publicação, 
-              com o suporte que todo autor merece.
-            </p>
-          </div>
+          {/* DEPOIMENTOS */}
+          <section className="py-32 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-6">
+              <h2 className="text-6xl md:text-8xl font-black text-center mb-24">
+                <span className="text-black">O que nossos autores</span><br />
+                <span className="text-[#ffb319]">dizem</span>
+              </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="feature-card p-6 text-center border rounded-lg hover:shadow-lg transition-shadow">
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 rounded-2xl bg-primary-soft">
-                    <feature.icon className="h-6 w-6 text-primary" />
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {reviews.map((r, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 80 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.15 }}
+                    viewport={{ once: true }}
+                    whileHover={{ y: -12 }}
+                    className="p-10 bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100"
+                  >
+                    <div className="flex items-center gap-5 mb-8">
+                      <div className="w-16 h-16 rounded-full bg-[#ffb319] flex items-center justify-center text-black font-black text-2xl">
+                        {r.name[0]}
+                      </div>
+                      <div>
+                        <p className="font-bold text-xl">{r.name}</p>
+                        <p className="text-gray-600">{r.username}</p>
+                      </div>
+                    </div>
+                    <div className="flex mb-6">
+                      {[...Array(5)].map((_, j) => (
+                        <Star key={j} className="w-6 h-6 fill-[#ffb319] text-[#ffb319]" />
+                      ))}
+                    </div>
+                    <p className="text-xl italic text-gray-800 leading-relaxed">"{r.body}"</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* FOOTER */}
+          <footer className="bg-black text-white py-20">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="grid md:grid-cols-4 gap-12">
+                <div>
+                  <h3 className="text-4xl font-black mb-6">
+                    Literare<span className="text-[#ffb319]"> Books</span>
+                  </h3>
+                  <p className="text-gray-400 leading-relaxed">
+                    Transformando autores em referências a mais de 20 anos.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-bold mb-6">Links Rápidos</h4>
+                  <ul className="space-y-4 text-gray-400">
+                    <li><Link to="/submit" className="hover:text-[#ffb319] transition">Submeter Capítulo</Link></li>
+                    <li><a href="https://loja.literarebooks.com.br/" className="hover:text-[#ffb319] transition">Nossos Livros</a></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-bold mb-6">Contato</h4>
+                  <ul className="space-y-4 text-gray-400">
+                    <li className="flex items-center gap-3"><Mail className="w-5 h-5" />comunicacao@literarebooks.com.br</li>
+                    <li className="flex items-center gap-3"><Phone className="w-5 h-5" /> (11) 2659-0964</li>
+                    <li className="flex items-center gap-3"><MapPin className="w-5 h-5" /> São Paulo • Brasil</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-bold mb-6">Redes Sociais</h4>
+                  <div className="flex gap-6">
+                    <a href="https://www.instagram.com/literarebooks/" className="w-12 h-12 rounded-full bg-[#ffb319] flex items-center justify-center hover:scale-110 transition">
+                      <Instagram className="w-6 h-6 text-black" />
+                    </a>
+                    <a href="https://br.linkedin.com/company/literarebooks" className="w-12 h-12 rounded-full bg-[#ffb319] flex items-center justify-center hover:scale-110 transition">
+                      <Linkedin className="w-6 h-6 text-black" />
+                    </a>
+                    <a href="https://www.youtube.com/watch?v=K-pjUohCq84&t=1s" className="w-12 h-12 rounded-full bg-[#ffb319] flex items-center justify-center hover:scale-110 transition">
+                      <Youtube className="w-6 h-6 text-black" />
+                    </a>
                   </div>
                 </div>
-                <h3 className="heading-sm text-foreground mb-3">
-                  {feature.title}
-                </h3>
-                <p className="body-sm text-muted-foreground">
-                  {feature.description}
-                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Seção CTA */}
-      <section ref={ctaRef} className="py-24 bg-gradient-soft">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="cta-content space-y-8">
-            <h2 className="heading-lg text-foreground">
-              Pronto para publicar sua história?
-            </h2>
-            <p className="body-lg text-muted-foreground">
-              Inicie sua jornada conosco hoje mesmo. Envie seu primeiro capítulo 
-              e descubra o potencial da sua escrita.
-            </p>
-            <a href="/submit">
-              <button className="bg-primary text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-primary/90 transition">
-                Começar Agora
-              </button>
-            </a>
-          </div>
+              <div className="mt-20 pt-10 border-t border-gray-800 text-center text-gray-500">
+                <p>© 2025 Literare Books • Todos os direitos reservados
+                  <br></br>
+                <link rel="stylesheet" href="https://www.linkedin.com/company/termitdev" />Desenvolvido por TERMIT</p>
+              </div>
+            </div>
+          </footer>
         </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }

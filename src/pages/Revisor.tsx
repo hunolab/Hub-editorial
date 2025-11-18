@@ -1,248 +1,223 @@
 // src/pages/Revisor.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // npm install axios
 import { useToast } from '@/components/ui/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox'; // Assuma que você tem este componente
+import { Loader2, CheckCircle, FileText, Zap } from 'lucide-react';
 
-interface Regra {
-  id: string;
-  busca: string;
-  flags: string;
-  correcao: string;
-  mensagem: string;
-}
+interface RegraLT { id: string; pattern: RegExp; message: string; suggestions: string[] }
+interface Erro { start: number; end: number; message: string; suggestion?: string; source: 'offline' | 'api' }
 
 export default function Revisor() {
   const [texto, setTexto] = useState('');
-  const [textoRevisado, setTextoRevisado] = useState('');
-  const [regras, setRegras] = useState<Regra[]>([]);
+  const [erros, setErros] = useState<Erro[]>([]);
+  const [regras, setRegras] = useState<RegraLT[]>([]);
   const [dicionario, setDicionario] = useState<Set<string> | null>(null);
-  const [stopwords, setStopwords] = useState<Set<string>>(new Set());
-  const [isRevisando, setIsRevisando] = useState(false);
-  const workerRef = useRef<Worker | null>(null);
+  const [carregado, setCarregado] = useState(false);
+  const [usarAPI, setUsarAPI] = useState(false); // Novo: toggle para API
+  const [apiKey] = useState(process.env.REACT_APP_LANGUAGETOOL_API_KEY || ''); // Chave do .env
   const { toast } = useToast();
 
-  // 1. CARREGA REGRAS DO grammar-rules.xml
   useEffect(() => {
-    const carregarGrammar = async () => {
-      try {
-        const res = await fetch('/dict/grammar-rules.xml');
-        const xmlText = await res.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, 'text/xml');
-        const rules = xml.querySelectorAll('rule');
+    Promise.all([
+      fetch('/dict/grammar.xml').then(r => r.text()),
+      fetch('/dict/dicionario-completo.txt').then(r => r.text())
+    ]).then(([xmlText, dictText]) => {
+      const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+      const rules = xml.querySelectorAll('rule');
+      const regrasCarregadas: RegraLT[] = [];
 
-        const regrasArray: Regra[] = [];
-        rules.forEach(rule => {
-          const id = rule.getAttribute('id') || '';
-          const pattern = rule.querySelector('pattern')?.textContent || '';
-          const suggestion = rule.querySelector('suggestion')?.textContent || '';
-          const message = rule.querySelector('message')?.textContent || 'Erro gramatical';
+      rules.forEach(rule => {
+        const id = rule.getAttribute('id') || '';
+        const message = rule.querySelector('message')?.textContent || 'Erro';
+        const tokens = Array.from(rule.querySelectorAll('pattern token'));
+        const suggestion = rule.querySelector('suggestion')?.textContent || '';
 
-          if (pattern && suggestion) {
-            const busca = pattern.replace(/<[^>]*>/g, '').trim();
-            const correcao = suggestion.replace(/\\(\d+)/g, '$$$1');
-            regrasArray.push({ id, busca, flags: 'gi', correcao, mensagem: message });
-          }
+        if (!tokens.length) return;
+
+        let regexStr = '';
+        tokens.forEach((t, i) => {
+          let part = t.getAttribute('regexp') === 'yes' ? t.textContent! : t.textContent!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          if (t.getAttribute('negate') === 'yes') part = `(?!${part})\\b\\w+\\b`;
+          regexStr += part + (i < tokens.length - 1 ? '\\s+' : '');
         });
 
-        setRegras(regrasArray);
-        toast({ title: 'Regras carregadas', description: `${regrasArray.length} regras ativas` });
-      } catch {
-        toast({ title: 'Erro', description: 'Falha ao carregar grammar-rules.xml', variant: 'destructive' });
-      }
-    };
-    carregarGrammar();
-  }, [toast]);
-
-  // 2. CARREGA STOPWORDS
-  useEffect(() => {
-    fetch('/dict/stopwords-pt.txt')
-      .then(r => r.text())
-      .then(text => {
-        const list = text.split('\n').map(w => w.trim().toLowerCase()).filter(Boolean);
-        setStopwords(new Set(list));
-      });
-  }, []);
-
-  // 3. WEB WORKER PARA DICIONÁRIO (320k palavras)
-  useEffect(() => {
-    const workerCode = `
-      self.onmessage = async () => {
-        const response = await fetch('/dict/ptwords.txt');
-        const text = await response.text();
-        const words = text.split('\\n').map(w => w.trim().toLowerCase()).filter(Boolean);
-        self.postMessage(new Set(words));
-      };
-    `;
-
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    workerRef.current = new Worker(URL.createObjectURL(blob));
-
-    workerRef.current.onmessage = (e) => {
-      setDicionario(e.data);
-      toast({ title: 'Dicionário carregado', description: '320.000 palavras prontas!' });
-    };
-
-    workerRef.current.postMessage(null);
-
-    return () => workerRef.current?.terminate();
-  }, [toast]);
-
-  // 4. APLICA REGRAS + ORTOGRAFIA
-  const aplicarRegras = (textoOriginal: string): string => {
-    if (!dicionario) return '<em class="text-muted-foreground">Aguarde o dicionário...</em>';
-
-    let textoAtual = textoOriginal;
-
-    // Gramática
-    regras.forEach(regra => {
-      try {
-        const regex = new RegExp(regra.busca, regra.flags);
-        textoAtual = textoAtual.replace(regex, (match, ...groups) => {
-          let correcao = regra.correcao;
-          groups.slice(0, -2).forEach((g, i) => {
-            correcao = correcao.replace(`$${i + 1}`, g);
+        try {
+          regrasCarregadas.push({
+            id,
+            pattern: new RegExp(`\\b${regexStr}\\b`, 'gi'),
+            message: message.replace(/<suggestion>.*?<\/suggestion>/g, '').trim(),
+            suggestions: suggestion ? [suggestion.replace(/\\(\d)/g, '$$$1')] : []
           });
-          return `<span class="bg-yellow-200 text-yellow-900 px-1 rounded font-medium" title="${regra.mensagem}">${match}</span><span class="text-green-600 font-medium ml-1">→ ${correcao}</span>`;
-        });
-      } catch (e) {
-        console.warn('Regra inválida:', regra);
-      }
-    });
+        } catch (e) { console.warn('Regra inválida:', id); }
+      });
 
-    // Ortografia
-    const palavrasUnicas = [...new Set(
-      textoAtual
-        .replace(/<[^>]*>/g, '')
-        .toLowerCase()
-        .match(/\b[\wà-ú]+\b/g) || []
-    )];
+      const palavras = new Set(dictText.split('\n').map(l => l.split('/')[0].trim().toLowerCase()).filter(Boolean));
+      setRegras(regrasCarregadas);
+      setDicionario(palavras);
+      setCarregado(true);
+      toast({ title: 'Carregado!', description: `${regrasCarregadas.length} regras + ${palavras.size} palavras` });
+    }).catch(() => toast({ title: 'Erro', description: 'Verifique /public/dict/', variant: 'destructive' }));
+  }, [toast]);
 
-    palavrasUnicas.forEach(palavra => {
-      if (
-        palavra.length > 2 &&
-        !dicionario.has(palavra) &&
-        !stopwords.has(palavra)
-      ) {
-        const regex = new RegExp(`\\b${palavra}\\b`, 'gi');
-        textoAtual = textoAtual.replace(regex, `<span class="bg-red-200 text-red-800 px-1 rounded font-medium">${palavra}</span>`);
-      }
-    });
+  // Nova: Revisão com API LanguageTool
+  const revisarComAPI = async () => {
+    if (!apiKey) {
+      toast({ title: 'Erro API', description: 'Adicione REACT_APP_LANGUAGETOOL_API_KEY no .env', variant: 'destructive' });
+      return;
+    }
 
-    return textoAtual || '<em class="text-muted-foreground">Nenhum erro encontrado.</em>';
+    try {
+      const response = await axios.post('https://api.languagetool.org/v2/check', 
+        `language=pt-BR&text=${encodeURIComponent(texto)}`, 
+        { headers: { Authorization: `Key ${apiKey}` } }
+      );
+      const apiErros: Erro[] = response.data.matches.map((match: any) => ({
+        start: match.offset,
+        end: match.offset + match.length,
+        message: match.message,
+        suggestion: match.replacements[0]?.value || undefined,
+        source: 'api' as const
+      }));
+      return apiErros;
+    } catch (error) {
+      console.error('API Error:', error);
+      toast({ title: 'Erro API', description: 'Falha na LanguageTool. Usando offline.', variant: 'destructive' });
+      return [];
+    }
   };
 
-  const handleRevisar = () => {
-    setIsRevisando(true);
-    setTimeout(() => {
-      const revisado = aplicarRegras(texto);
-      setTextoRevisado(revisado);
-      setIsRevisando(false);
-    }, 100);
+  const revisar = async () => {
+    if (!carregado || !texto.trim()) return;
+    let novosErros: Erro[] = [];
+
+    // Offline sempre
+    regras.forEach(r => {
+      for (const m of texto.matchAll(r.pattern)) {
+        if (m.index === undefined) continue;
+        novosErros.push({ start: m.index, end: m.index + m[0].length, message: r.message, suggestion: r.suggestions[0], source: 'offline' });
+      }
+    });
+
+    if (dicionario) {
+      const palavras = texto.toLowerCase().match(/\b[\wà-ú]+\b/g) || [];
+      new Set(palavras).forEach(p => {
+        if (p.length > 2 && !dicionario.has(p)) {
+          const re = new RegExp(`\\b${p}\\b`, 'gi');
+          let m;
+          while ((m = re.exec(texto))) {
+            novosErros.push({ start: m.index, end: m.index + m[0].length, message: 'Palavra não encontrada', source: 'offline' });
+          }
+        }
+      });
+    }
+
+    // API se ativada
+    if (usarAPI) {
+      const apiErros = await revisarComAPI();
+      novosErros = [...novosErros, ...apiErros];
+    }
+
+    novosErros.sort((a, b) => a.start - b.start);
+    setErros(novosErros);
+  };
+
+  const escape = (t: string) => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
+  const gerarHTML = () => {
+    if (!erros.length) return texto ? escape(texto).replace(/\n/g, '<br>') : '<em class="text-gray-500">Clique em Revisar.</em>';
+
+    let html = '', pos = 0;
+    for (const e of erros) {
+      html += escape(texto.slice(pos, e.start)).replace(/\n/g, '<br>');
+      const textoErro = escape(texto.slice(e.start, e.end));
+      const cor = e.source === 'api' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'; // Nova: cor por fonte
+      const tooltip = e.suggestion ? `${e.message} → <strong>${escape(e.suggestion)}</strong>` : e.message;
+
+      html += `<mark class="${cor} font-medium px-1 rounded cursor-help inline group">
+        ${textoErro}
+        <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-2 rounded opacity-0 group-hover:opacity-100 transition z-50 pointer-events-none max-w-xs break-words whitespace-normal">
+          ${tooltip} (${e.source})
+        </span>
+      </mark>`;
+      pos = e.end;
+    }
+    html += escape(texto.slice(pos)).replace(/\n/g, '<br>');
+    return html;
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FileText className="h-8 w-8 text-blue-600" />
-            Revisor de Texto IA
-          </h1>
-          <p className="text-muted-foreground mt-1">Gramática + Ortografia em PT-BR com 320k palavras</p>
+    <div className="p-6 max-w-5xl mx-auto space-y-8 font-sans">
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap');
+        * { font-family: 'Outfit', sans-serif !important; }
+        mark { display: inline !important; white-space: normal !important; line-height: inherit !important; }
+        mark .absolute { opacity: 0 !important; transition: opacity .2s !important; }
+        mark:hover .absolute { opacity: 1 !important; }
+      `}</style>
+
+      <div className="text-center space-y-2">
+        <div className="flex justify-center items-center gap-3">
+          <FileText className="h-9 w-9 text-gray-700" />
+          <h1 className="text-3xl font-bold">Revisor</h1>
+          <Zap className={`h-6 w-6 ${usarAPI ? 'text-blue-500' : 'text-gray-300'}`} title="Modo API" />
         </div>
-        <div className="flex gap-2">
-          <Badge variant="secondary" className="flex items-center gap-1">
-            {regras.length} regras
-          </Badge>
-          <Badge variant={dicionario ? 'default' : 'secondary'}>
-            {dicionario ? <CheckCircle className="h-3 w-3" /> : <Loader2 className="h-3 w-3 animate-spin" />}
-            {dicionario ? 'Dicionário OK' : 'Carregando...'}
-          </Badge>
-        </div>
+        <p className="text-gray-600">Offline + API (LanguageTool)</p>
       </div>
 
-      {/* Cards de Entrada e Saída */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Texto Original */}
+      <div className="flex justify-center gap-3 flex-wrap">
+        <Badge variant="outline">{regras.length} regras</Badge>
+        <Badge variant="outline">{erros.length} erro{erros.length !== 1 ? 's' : ''}</Badge>
+        <Badge variant={carregado ? "secondary" : "outline"}>
+          {carregado ? <CheckCircle className="mr-1 h-3 w-3" /> : <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+          {carregado ? 'Pronto' : 'Carregando...'}
+        </Badge>
+      </div>
+
+      {/* Novo: Toggle API */}
+      <div className="flex justify-center items-center gap-2">
+        <Checkbox id="api" checked={usarAPI} onCheckedChange={setUsarAPI} />
+        <label htmlFor="api" className="text-sm text-gray-600">Usar API LanguageTool (azul)</label>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Texto Original</CardTitle>
-            <CardDescription>Cole ou digite o texto para revisar</CardDescription>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-lg flex items-center gap-2">
+            <span className="w-2 h-2 bg-red-500 rounded-full"></span> Original
+          </CardTitle></CardHeader>
           <CardContent>
             <Textarea
-              placeholder="Ex: O livro foi enviada para gráfica ontem..."
+              placeholder="Digite seu texto..."
               value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              className="min-h-64 resize-none font-mono text-sm"
+              onChange={e => setTexto(e.target.value)}
+              className="min-h-96 font-mono text-sm resize-none"
             />
           </CardContent>
         </Card>
 
-        {/* Texto Revisado */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Texto Revisado</CardTitle>
-            <CardDescription>
-              {textoRevisado ? 'Erros destacados' : 'Clique em Revisar'}
-            </CardDescription>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-lg flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span> Revisado
+          </CardTitle></CardHeader>
           <CardContent>
             <div
-              className="min-h-64 p-4 bg-muted/50 rounded-lg prose prose-sm max-w-none overflow-auto font-mono text-sm"
-              dangerouslySetInnerHTML={{ __html: textoRevisado || '<em class="text-muted-foreground">Aguardando revisão...</em>' }}
+              className="min-h-96 p-5 bg-white rounded border font-mono text-sm overflow-auto"
+              style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: '1.75' }}
+              dangerouslySetInnerHTML={{ __html: gerarHTML() }}
             />
           </CardContent>
         </Card>
       </div>
 
-      {/* Botão de Ação */}
       <div className="flex justify-center">
-        <Button
-          onClick={handleRevisar}
-          disabled={!dicionario || !texto.trim() || isRevisando}
-          size="lg"
-          className="w-full max-w-md"
-        >
-          {isRevisando ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Revisando...
-            </>
-          ) : (
-            <>
-              <AlertCircle className="mr-2 h-5 w-5" />
-              Revisar com Gramática + Ortografia
-            </>
-          )}
+        <Button onClick={revisar} disabled={!carregado || !texto.trim()} size="lg" className="px-12">
+          Revisar Texto
         </Button>
       </div>
-
-      {/* Legenda */}
-      <Card className="bg-muted/30">
-        <CardHeader>
-          <CardTitle className="text-sm">Legenda de Correções</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-8 h-5 bg-yellow-200 rounded"></span>
-            <span>Erro gramatical</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-8 h-5 bg-red-200 rounded"></span>
-            <span>Erro ortográfico</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-green-600 font-medium">→ correção</span>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

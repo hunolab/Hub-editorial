@@ -33,7 +33,7 @@ export const SidebarComponent = ({ open, setOpen }: SidebarProps) => {
     { label: "Entregas", href: "/dashboard/logistica", icon: <Package className="h-5 w-5" /> },
     { label: "Estoque", href: "/dashboard/estoque", icon: <Warehouse className="h-5 w-5" /> },
     { label: "Comercial", href: "/dashboard/comercial", icon: <BarChart3 className="h-5 w-5" /> },
-    { label: "Revisor IA", href: "/dashboard/revisor", icon: <Edit3 className="h-5 w-5" /> },
+    { label: "Projeto 64", href: "/dashboard/revisor", icon: <Edit3 className="h-5 w-5" /> },
   ];
 
   return (

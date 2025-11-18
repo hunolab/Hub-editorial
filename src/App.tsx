@@ -23,7 +23,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 
 // === COMPONENTES ===
 import Navigation from "./components/Navigation";
-import Footer from "./components/Footer"; // Footer externo (src/components/Footer.tsx)
+import Footer from "./components/footer.tsx"; // Footer externo (src/components/Footer.tsx)
 
 // === PÁGINAS (LAZY LOADING) ===
 const Home = lazy(() => import("./pages/Home"));
